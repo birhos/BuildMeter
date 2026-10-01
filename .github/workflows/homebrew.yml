@@ -1,0 +1,74 @@
+name: Update Homebrew tap
+
+# Bir GitHub release yayınlandığında birhos/homebrew-tap içindeki formula ve
+# cask'ı yeni sürümün url/sha256 değerleriyle günceller. Tag push'u yerine
+# release olayını dinler, çünkü DMG release'e tag'den sonra elle yükleniyor.
+# Tap'e yazmak için HOMEBREW_TAP_DEPLOY_KEY secret'ındaki deploy key kullanılır.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Sürüm etiketi (ör. v1.0.1)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Sürümü ve checksum'ları hesapla
+        run: |
+          version="${TAG#v}"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+
+          curl -fsSL "https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${TAG}.tar.gz" -o source.tar.gz
+          echo "SOURCE_SHA=$(sha256sum source.tar.gz | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+          dmg="BuildMeter-${version}.dmg"
+          if gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "$dmg"; then
+            echo "DMG_SHA=$(sha256sum "$dmg" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          else
+            echo "::warning::${dmg} release'te yok, cask güncellenmeyecek"
+          fi
+
+      - uses: actions/checkout@v5
+        with:
+          repository: birhos/homebrew-tap
+          ssh-key: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+          path: tap
+
+      - name: Formula ve cask'ı güncelle
+        working-directory: tap
+        run: |
+          sed -i -E \
+            -e "s|refs/tags/v[^/]+\.tar\.gz|refs/tags/${TAG}.tar.gz|" \
+            -e "s|sha256 \"[0-9a-f]{64}\"|sha256 \"${SOURCE_SHA}\"|" \
+            Formula/buildmeter.rb
+
+          if [ -n "${DMG_SHA:-}" ]; then
+            sed -i -E \
+              -e "s|version \"[^\"]+\"|version \"${VERSION}\"|" \
+              -e "s|sha256 \"[0-9a-f]{64}\"|sha256 \"${DMG_SHA}\"|" \
+              Casks/buildmeter.rb
+          fi
+
+          git diff
+
+      - name: Commit ve push
+        working-directory: tap
+        run: |
+          if git diff --quiet; then
+            echo "Tap zaten ${TAG} sürümünde"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "buildmeter ${VERSION}"
+          git push
