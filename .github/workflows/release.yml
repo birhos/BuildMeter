@@ -1,0 +1,48 @@
+name: Release extension
+
+# v1.0.1 gibi bir tag push'landığında eklentiyi paketleyip Open VSX'e
+# trusted publishing (OIDC) ile yayınlar. Token gerekmez.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: publish
+    defaults:
+      run:
+        working-directory: vscode-extension
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Sürümü oku ve tag ile karşılaştır
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME}, package.json sürümü ${version} ile uyuşmuyor"
+            exit 1
+          fi
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Paketle
+        run: npx --yes @vscode/vsce package --out "buildmeter-${VERSION}.vsix"
+
+      - name: Open VSX'e yayınla
+        run: npx --yes ovsx publish buildmeter-*.vsix --trusted-publishing
+
+      # Aynı .vsix, VS Code Marketplace'e elle yüklenmek üzere indirilebilir.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: vscode-extension/*.vsix
