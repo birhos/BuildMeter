@@ -114,4 +114,4 @@ scripts/uninstall.sh --purge   # also deletes ~/.buildmeter
 
 ## License
 
-The editor extension is distributed under the MIT License; see [vscode-extension/LICENSE](vscode-extension/LICENSE).
+BuildMeter is distributed under the MIT License; see [LICENSE](LICENSE).
