@@ -42,6 +42,21 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 
 ## Installation
 
+### Homebrew
+
+```bash
+brew install birhos/tap/buildmeter          # terminal wrapper
+brew install --cask birhos/tap/buildmeter   # macOS app + widget
+```
+
+The formula installs `buildmeter-track` without touching your `~/.zshrc`. To enable tracking, add this line to `~/.zshrc`:
+
+```bash
+source "$(brew --prefix)/share/buildmeter/buildmeter.zsh"
+```
+
+The cask installs the same unnotarized DMG described below, so the Gatekeeper step applies to it too.
+
 ### macOS app (DMG)
 
 1. Download `BuildMeter-<version>.dmg` from the [Releases](https://github.com/birhos/BuildMeter/releases/latest) page. It is a universal build (Apple silicon and Intel) and does not need Xcode.
