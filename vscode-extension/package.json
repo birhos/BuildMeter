@@ -1,11 +1,15 @@
 {
   "name": "buildmeter",
   "displayName": "BuildMeter",
-  "description": "Flutter debug oturumlarında uygulama açılana kadar beklenen süreyi ölçer ve BuildMeter macOS uygulamasına aktarır.",
+  "description": "Measures how long Flutter debug sessions take until the app is up, and feeds the results to the BuildMeter macOS app.",
   "version": "1.0.0",
   "publisher": "HaydarDemir",
   "icon": "icon.png",
   "license": "MIT",
+  "homepage": "https://github.com/birhos/BuildMeter#readme",
+  "bugs": {
+    "url": "https://github.com/birhos/BuildMeter/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/birhos/BuildMeter"
@@ -14,7 +18,15 @@
     "vscode": "^1.80.0"
   },
   "categories": [
+    "Debuggers",
     "Other"
+  ],
+  "keywords": [
+    "flutter",
+    "build time",
+    "productivity",
+    "dart",
+    "debug"
   ],
   "activationEvents": [
     "onStartupFinished"
