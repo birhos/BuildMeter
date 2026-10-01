@@ -1,0 +1,66 @@
+name: BuildMeter
+options:
+  bundleIdPrefix: com.haydardemir
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    # Kendi Apple Developer Team ID'niz (Xcode > Settings > Accounts).
+    DEVELOPMENT_TEAM: QLVD672J6F
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  BuildMeter:
+    type: application
+    platform: macOS
+    sources: [App, Shared]
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: BuildMeter
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.developer-tools
+        AppGroupID: $(TeamIdentifierPrefix)com.haydardemir.BuildMeter
+    entitlements:
+      path: App/BuildMeter.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.haydardemir.BuildMeter
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.haydardemir.BuildMeter
+        PRODUCT_NAME: BuildMeter
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: BuildMeterWidget
+        embed: true
+
+  BuildMeterWidget:
+    type: app-extension
+    platform: macOS
+    sources: [Widget, Shared]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: BuildMeter
+        AppGroupID: $(TeamIdentifierPrefix)com.haydardemir.BuildMeter
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/BuildMeterWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.temporary-exception.files.home-relative-path.read-only:
+          - /.buildmeter/
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.haydardemir.BuildMeter
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.haydardemir.BuildMeter.Widget
+        SKIP_INSTALL: YES

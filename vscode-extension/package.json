@@ -1,0 +1,31 @@
+{
+  "name": "buildmeter",
+  "displayName": "BuildMeter",
+  "description": "Flutter debug oturumlarında uygulama açılana kadar beklenen süreyi ölçer ve BuildMeter macOS uygulamasına aktarır.",
+  "version": "1.0.0",
+  "publisher": "haydardemir",
+  "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/birhos/BuildMeter"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "buildmeter.openLog",
+        "title": "BuildMeter: Olay kayıtlarını aç"
+      }
+    ]
+  }
+}

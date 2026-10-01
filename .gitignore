@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Xcode / XcodeGen (proje project.yml'den üretilir)
+macos/build/
+macos/build.log
+macos/BuildMeter.xcodeproj/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# VS Code eklentisi
+vscode-extension/*.vsix
+node_modules/
+
+# Editörler
+.idea/
+.vscode/
