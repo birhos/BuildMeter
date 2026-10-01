@@ -10,6 +10,20 @@
 
 BuildMeter records how long you wait for `flutter run` and `flutter build`, and for Flutter debug sessions started from your editor, until the app is up. Records are collected in `~/.buildmeter/events.jsonl`; a macOS menu bar app and widget turn them into daily, weekly and monthly summaries.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td rowspan="2" valign="top"><img alt="Menu bar window" src="docs/screenshots/menu-bar.png" width="380"></td>
+    <td valign="top"><img alt="Medium widget" src="docs/screenshots/widget-medium.png" width="360"></td>
+  </tr>
+  <tr>
+    <td valign="top"><img alt="Medium widget on the desktop (tinted)" src="docs/screenshots/widget-medium-desktop.png" width="360"></td>
+  </tr>
+</table>
+
+The menu bar window (left) and the medium desktop widget, in full color and as it appears on the desktop when another window is in focus.
+
 ## Components
 
 | Component | What it measures | Source |
