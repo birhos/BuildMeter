@@ -16,3 +16,6 @@ node_modules/
 # Editörler
 .idea/
 .vscode/
+
+# Dosyalar
+RELEASE.md
