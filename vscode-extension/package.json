@@ -3,7 +3,7 @@
   "displayName": "BuildMeter",
   "description": "Flutter debug oturumlarında uygulama açılana kadar beklenen süreyi ölçer ve BuildMeter macOS uygulamasına aktarır.",
   "version": "1.0.0",
-  "publisher": "haydardemir",
+  "publisher": "HaydarDemir",
   "icon": "icon.png",
   "license": "MIT",
   "repository": {

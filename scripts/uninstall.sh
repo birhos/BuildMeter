@@ -13,11 +13,11 @@ for entry in "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/co
              "/Applications/Antigravity.app/Contents/Resources/app/bin/antigravity|$HOME/Library/Application Support/Antigravity"; do
   IFS='|' read -r cli support <<<"$entry"
   [ -x "$cli" ] || continue
-  "$cli" --uninstall-extension haydardemir.buildmeter >/dev/null 2>&1
+  "$cli" --uninstall-extension HaydarDemir.buildmeter >/dev/null 2>&1
   storage="$support/User/globalStorage/storage.json"
   [ -f "$storage" ] && node -e 'for (const p of JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).userDataProfiles||[]) console.log(p.name)' "$storage" 2>/dev/null |
     while IFS= read -r profile; do
-      "$cli" --uninstall-extension haydardemir.buildmeter --profile "$profile" >/dev/null 2>&1
+      "$cli" --uninstall-extension HaydarDemir.buildmeter --profile "$profile" >/dev/null 2>&1
     done
 done
 echo "✓ Editör eklentileri kaldırıldı"
