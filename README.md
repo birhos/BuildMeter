@@ -35,12 +35,31 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 ## Requirements
 
 - macOS 14.0 or later
-- Xcode (`xcodebuild`)
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
+- Xcode (`xcodebuild`), only for building the app from source
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`, only for building the app from source
 - zsh, for the terminal wrapper
 - Node.js (the extension is packaged with `npx`) and VS Code 1.80+, Cursor or Antigravity, for the editor extension
 
 ## Installation
+
+### macOS app (DMG)
+
+1. Download `BuildMeter-<version>.dmg` from the [Releases](https://github.com/birhos/BuildMeter/releases/latest) page. It is a universal build (Apple silicon and Intel) and does not need Xcode.
+2. Open the DMG and drag **BuildMeter** into **Applications**.
+3. The app is not signed with an Apple Developer ID or notarized, so Gatekeeper blocks it on first launch. Remove the quarantine flag:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/BuildMeter.app
+   ```
+
+   Alternatively, try to open the app once, then go to System Settings > Privacy & Security and click **Open Anyway**.
+4. Launch BuildMeter. To add the widget, right-click the desktop > Edit Widgets > "BuildMeter".
+
+To verify the download, place the `.sha256` file from the release next to the DMG and run `shasum -a 256 -c BuildMeter-<version>.dmg.sha256`.
+
+The DMG contains only the app and widget. Install the terminal wrapper and the editor extension from source as described below (`scripts/install.sh --cli-only` and `--ext-only`).
+
+### From source
 
 ```bash
 git clone https://github.com/birhos/BuildMeter.git
