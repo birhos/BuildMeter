@@ -30,9 +30,12 @@ class Buildmeter < Formula
       To track builds automatically, add this to your ~/.zshrc (or ~/.bashrc):
         source #{opt_pkgshare}/buildmeter.zsh
 
-      For .NET builds (dotnet build, Rider), install the MSBuild hook:
-        mkdir -p ~/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter
-        cp #{opt_pkgshare}/BuildMeter.targets ~/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/
+      For .NET builds (dotnet build, Rider), install the MSBuild hook
+      (.NET 8+ reads ~/Library/Application Support, .NET 7 and earlier ~/.local/share):
+        for d in ~/Library/Application\ Support ~/.local/share; do
+          mkdir -p "$d/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
+          cp #{opt_pkgshare}/BuildMeter.targets "$d/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/"
+        done
 
       Records are written to ~/.buildmeter/events.jsonl. Report: buildmeter report --range week
       The macOS app is available as a cask: brew install --cask birhos/tap/buildmeter

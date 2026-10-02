@@ -5,7 +5,8 @@
   MSBuild bu dosyayı kullanıcı düzeyindeki ImportAfter klasöründen her projeye
   otomatik ekler; dotnet build, Rider ve Visual Studio'nun üçü de buradan geçer.
 
-    macOS:   ~/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/
+    macOS:   ~/Library/Application Support/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/  (.NET 8+)
+             ~/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/                (.NET 7 ve öncesi)
     Windows: %LOCALAPPDATA%\Microsoft\MSBuild\Current\Microsoft.Common.targets\ImportAfter\
 
   Her proje build'inde ~/.buildmeter/events.jsonl dosyasına bir "start" ve bir

@@ -16,8 +16,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_DIR="$HOME/.buildmeter"
 APP_NAME="BuildMeter.app"
-# MSBuild, kullanıcı düzeyindeki bu klasördeki .targets dosyalarını her projeye ekler.
-MSBUILD_IMPORT_AFTER="$HOME/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
+# MSBuild, kullanıcı düzeyindeki bu klasörlerdeki .targets dosyalarını her projeye ekler.
+# .NET 8 ve sonrası macOS'ta ~/Library/Application Support'u, .NET 7 ve öncesi
+# ~/.local/share'i okur; her SDK yalnızca kendi klasörünü import eder.
+MSBUILD_IMPORT_AFTER_DIRS=(
+  "$HOME/Library/Application Support/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
+  "$HOME/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
+)
 ONLY="${1:-}"
 
 banner() {
@@ -144,8 +149,12 @@ add_rc_line() { # dosya satır aranacak_metin
 
 install_dotnet() {
   step ".NET için MSBuild hook'u kuruluyor"
-  mkdir -p "$MSBUILD_IMPORT_AFTER" "$DATA_DIR"
-  install -m 644 "$ROOT/cli/msbuild/BuildMeter.targets" "$MSBUILD_IMPORT_AFTER/BuildMeter.targets"
+  local dir
+  for dir in "${MSBUILD_IMPORT_AFTER_DIRS[@]}"; do
+    mkdir -p "$dir"
+    install -m 644 "$ROOT/cli/msbuild/BuildMeter.targets" "$dir/BuildMeter.targets"
+  done
+  mkdir -p "$DATA_DIR"
   touch "$DATA_DIR/events.jsonl"
   ok "dotnet build ve Rider build'leri kaydedilecek"
   command -v dotnet >/dev/null || warn "dotnet bulunamadı; hook SDK kurulduğunda devreye girer"
