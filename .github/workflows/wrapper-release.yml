@@ -1,8 +1,9 @@
 name: Release wrapper
 
 # Bir GitHub release yayınlandığında terminal wrapper'ını macOS (universal), Windows
-# ve Linux için, Windows tepsi uygulamasını x64 ve arm64 için derler; shim'ler, MSBuild
-# hook'u ve checksums.txt ile birlikte release'e yükler. scripts/install-cli.sh,
+# ve Linux için, Windows tepsi uygulamasını x64 ve arm64 için, Rider plugin'ini ve Visual
+# Studio eklentisini (VSIX) derler; shim'ler, MSBuild hook'u ve checksums.txt ile birlikte
+# release'e yükler. scripts/install-cli.sh,
 # scripts/install.ps1 ve Scoop manifesti bu dosyaları indirir.
 on:
   release:
@@ -50,13 +51,54 @@ jobs:
             Compress-Archive -Path "publish/$arch/BuildMeter.exe" -DestinationPath "dist/BuildMeter-windows-$arch.zip"
           }
 
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Visual Studio eklentisini derle
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          $manifest = 'visualstudio/BuildMeter.VisualStudio/source.extension.vsixmanifest'
+          (Get-Content $manifest -Raw) -replace '(<Identity [^>]*Version=")[^"]+', "`${1}$version" | Set-Content $manifest -NoNewline
+          msbuild visualstudio/BuildMeter.VisualStudio/BuildMeter.VisualStudio.csproj /restore /p:Configuration=Release /p:Version=$version /v:minimal
+          if ($LASTEXITCODE -ne 0) { throw 'VSIX derlenemedi' }
+          Copy-Item visualstudio/BuildMeter.VisualStudio/bin/Release/net472/BuildMeter.VisualStudio.vsix windows/dist/BuildMeter.vsix
+
       - uses: actions/upload-artifact@v4
         with:
           name: tray
           path: windows/dist/*
 
+  rider-plugin:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    defaults:
+      run:
+        working-directory: rider-plugin
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Rider plugin'ini derle
+        run: |
+          ./gradlew test buildPlugin -PpluginVersion="${TAG#v}"
+          cp build/distributions/buildmeter-rider-*.zip build/BuildMeter-rider.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rider-plugin
+          path: rider-plugin/build/BuildMeter-rider.zip
+
   build:
-    needs: tray
+    needs: [tray, rider-plugin]
     runs-on: macos-15
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
@@ -94,6 +136,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: tray
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: rider-plugin
           path: dist
 
       - name: Shim'ler, hook ve checksum'lar

@@ -1,0 +1,19 @@
+<idea-plugin>
+    <id>com.birhos.buildmeter</id>
+    <name>BuildMeter</name>
+    <vendor url="https://github.com/birhos/BuildMeter">birhos</vendor>
+    <description><![CDATA[
+        Records how long it takes from pressing Run or Debug on a .NET project until the app is ready
+        (<code>Now listening on:</code> for web, worker and Blazor apps; process start for console apps).
+        Records are written to <code>~/.buildmeter/events.jsonl</code> and shown by the BuildMeter
+        macOS menu bar app, the Windows tray app and <code>buildmeter report</code>.
+        Build times themselves are recorded by the BuildMeter MSBuild hook.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.rider</depends>
+
+    <projectListeners>
+        <listener class="com.birhos.buildmeter.rider.RunListener" topic="com.intellij.execution.ExecutionListener"/>
+    </projectListeners>
+</idea-plugin>

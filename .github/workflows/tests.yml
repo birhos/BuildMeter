@@ -73,3 +73,31 @@ jobs:
 
       - name: Fixture testleri ve tepsi uygulaması
         run: dotnet test BuildMeter.Windows.sln
+
+  rider-plugin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rider-plugin
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Testler ve plugin paketi
+        run: ./gradlew test buildPlugin verifyPluginStructure
+
+  visualstudio:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: VSIX
+        run: msbuild visualstudio/BuildMeter.VisualStudio/BuildMeter.VisualStudio.csproj /restore /p:Configuration=Release /v:minimal

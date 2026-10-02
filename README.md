@@ -30,6 +30,8 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 | --- | --- | --- |
 | Terminal wrapper | A single `buildmeter` binary (macOS, Windows, Linux) behind thin zsh, bash and PowerShell shims. Run and dev commands are timed until the app reports it is ready; build commands are timed to the end. See [the command table](#tracked-commands). | [`wrapper/`](wrapper), [`cli/`](cli) |
 | MSBuild hook | Every .NET project build, whether it comes from `dotnet build`, Rider or Visual Studio; design-time builds are skipped | [`cli/msbuild/`](cli/msbuild) |
+| Rider plugin | How long it takes from pressing Run or Debug on a .NET project until the app is ready: `Now listening on:` for web, worker and Blazor apps, process start for console apps. Builds are recorded by the MSBuild hook. | [`rider-plugin/`](rider-plugin) |
+| Visual Studio extension | One record per solution build (Build, Rebuild; Clean is skipped) instead of one per project, and with F5 the time until the app is ready. While it is installed, the MSBuild hook skips builds inside Visual Studio. | [`visualstudio/`](visualstudio) |
 | Editor extension | In VS Code, Cursor and Antigravity: debug sessions (Flutter, .NET, Node dev servers), build tasks, and commands typed in the integrated terminal through shell integration. Tags the editor's terminals so the wrapper and the MSBuild hook record the editor as the source. | [`vscode-extension/`](vscode-extension) |
 | macOS app + widget | Live timer in the menu bar, today's total, a 7-day chart, breakdown by project and source; small and medium desktop widgets | [`macos/`](macos) |
 | Windows tray app | The same window as the macOS app, opened from the notification area: live timer, today's total, a 7-day chart, breakdowns by technology, source and project, copy report and CSV. The tray icon shows a dot and the running time while a build is in progress. | [`windows/`](windows) |
@@ -43,6 +45,7 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 - Windows 10 or 11 (x64 or arm64), for the tray app
 - Go 1.23+, only for building the terminal wrapper from source
 - .NET 8 SDK, only for building the Windows tray app from source
+- JDK 21, only for building the Rider plugin from source; Visual Studio 2022 with the extension development workload, only for building the Visual Studio extension
 - Node.js (the extension is packaged with `npx`) and VS Code 1.93+, Cursor or Antigravity, for the editor extension
 
 ## Installation
@@ -94,6 +97,15 @@ scoop install https://github.com/birhos/BuildMeter/releases/latest/download/buil
 The manifest installs the `buildmeter` wrapper, the tray app (Start menu > BuildMeter) and the MSBuild hook. To time terminal commands, add the line printed after installation to your PowerShell profile. To start the tray app at sign-in, turn on **Girişte başlat** in its menu.
 
 The tray app is a single self-contained `BuildMeter.exe` (no .NET runtime needed). It is also attached to each release as `BuildMeter-windows-x64.zip` and `BuildMeter-windows-arm64.zip`. It is not code-signed, so SmartScreen may warn on first launch: click **More info** > **Run anyway**.
+
+### Rider and Visual Studio
+
+Download `BuildMeter-rider.zip` and `BuildMeter.vsix` from the [Releases](https://github.com/birhos/BuildMeter/releases/latest) page.
+
+- **Rider 2026.1+:** Settings > Plugins > ⚙ > Install Plugin from Disk…, pick `BuildMeter-rider.zip`, restart Rider.
+- **Visual Studio 2022 / 2026:** double-click `BuildMeter.vsix`, or run `VSIXInstaller.exe BuildMeter.vsix`.
+
+Both need the MSBuild hook for build times (installed by `install.sh --dotnet`, `install.ps1` or Scoop). To build them from source: `cd rider-plugin && ./gradlew buildPlugin` (JDK 21; add `-PriderPath=/Applications/Rider.app` to compile against a local Rider instead of downloading it) and, on Windows, `msbuild visualstudio\BuildMeter.VisualStudio\BuildMeter.VisualStudio.csproj /restore /p:Configuration=Release`.
 
 ### From source
 

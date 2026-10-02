@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Id="BuildMeter.VisualStudio.5c1f7b2e-8a4d-4f0e-9a63-2d7e1b9c4f10" Version="1.0.0" Language="en-US" Publisher="birhos" />
+    <DisplayName>BuildMeter</DisplayName>
+    <Description xml:space="preserve">Records how long you wait for Visual Studio builds (one record per solution build) and, with F5, from pressing Start until the app is ready. Records go to ~/.buildmeter/events.jsonl and are shown by the BuildMeter tray app, the macOS menu bar app and buildmeter report.</Description>
+    <MoreInfo>https://github.com/birhos/BuildMeter</MoreInfo>
+    <License>LICENSE</License>
+    <Icon>Resources\icon.png</Icon>
+    <Tags>build; timing; productivity</Tags>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">
+      <ProductArchitecture>arm64</ProductArchitecture>
+    </InstallationTarget>
+  </Installation>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,)" DisplayName="Visual Studio core editor" />
+  </Prerequisites>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+  </Assets>
+</PackageManifest>
