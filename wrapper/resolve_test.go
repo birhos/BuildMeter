@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,102 +19,41 @@ func write(t *testing.T, path, content string) {
 	}
 }
 
+// TestResolve, spec/resolve-cases.json içindeki vakaları doğrular. Editör eklentisi
+// (vscode-extension/test/resolve.test.js) aynı dosyayı kullanır.
 func TestResolve(t *testing.T) {
-	root := t.TempDir()
-
-	flutter := filepath.Join(root, "flutter_app")
-	write(t, filepath.Join(flutter, "pubspec.yaml"), "name: my_app # yorum\nversion: 1.0.0\n")
-	write(t, filepath.Join(flutter, "lib", "main.dart"), "")
-
-	vite := filepath.Join(root, "react-vite")
-	write(t, filepath.Join(vite, "package.json"), `{"name":"vite-app","scripts":{
-		"dev":"vite","build":"tsc -b && vite build","start":"vite","preview":"vite preview",
-		"lint":"eslint .","test":"vitest","build:ci":"cross-env NODE_ENV=production npm run build"},
-		"dependencies":{"react":"^19"}}`)
-
-	cra := filepath.Join(root, "react-cra")
-	write(t, filepath.Join(cra, "package.json"), `{"name":"cra-app","scripts":{"start":"react-scripts start","build":"react-scripts build"},"dependencies":{"react":"^18"}}`)
-
-	next := filepath.Join(root, "next-app")
-	write(t, filepath.Join(next, "package.json"), `{"name":"next-app","scripts":{"dev":"next dev --turbopack","build":"next build","start":"next start"},"dependencies":{"next":"15","react":"^19"}}`)
-
-	mono := filepath.Join(root, "mono")
-	write(t, filepath.Join(mono, "package.json"), `{"name":"mono","workspaces":["apps/*"]}`)
-	write(t, filepath.Join(mono, "apps", "web", "package.json"), `{"name":"@mono/web","scripts":{"build":"vite build"}}`)
-
-	plainVite := filepath.Join(root, "plain-vite")
-	write(t, filepath.Join(plainVite, "package.json"), `{"name":"plain","scripts":{"dev":"vite"}}`)
-
-	dotnet := filepath.Join(root, "dotnet")
-	write(t, filepath.Join(dotnet, "Shop.sln"), "")
-	write(t, filepath.Join(dotnet, "Api", "Api.csproj"), `<Project Sdk="Microsoft.NET.Sdk.Web"></Project>`)
-	write(t, filepath.Join(dotnet, "Tool", "Tool.csproj"), `<Project Sdk="Microsoft.NET.Sdk"></Project>`)
-
-	tests := []struct {
-		name, cwd, cmd string
-		want           string // "profil tech tool proje cihaz" ya da "-" (kayıt yok)
-	}{
-		{"F-1 flutter run", flutter, "flutter run -d ios", "flutter-run flutter flutter my_app ios"},
-		{"F-1 --device-id=", flutter, "flutter run --device-id=emulator-5554", "flutter-run flutter flutter my_app emulator-5554"},
-		{"F-2 fvm flutter run", flutter, "fvm flutter run -d macos", "flutter-run flutter fvm my_app macos"},
-		{"F-2 fvm spawn", flutter, "fvm spawn 3.24.0 run -d chrome", "flutter-run flutter fvm my_app chrome"},
-		{"F-3 flutter build apk", flutter, "flutter build apk --release", "flutter-build flutter flutter my_app apk"},
-		{"F-8 alt klasör", filepath.Join(flutter, "lib"), "flutter run", "flutter-run flutter flutter my_app "},
-		{"flutter pub get", flutter, "flutter pub get", "-"},
-
-		{"R-1 npm run build", vite, "npm run build", "vite-build react npm vite-app "},
-		{"R-2 pnpm build", vite, "pnpm build", "vite-build react pnpm vite-app "},
-		{"R-2 yarn build", vite, "yarn build", "vite-build react yarn vite-app "},
-		{"R-2 bun run build", vite, "bun run build", "vite-build react bun vite-app "},
-		{"R-3 npx vite build", vite, "npx vite build", "vite-build react npx vite-app "},
-		{"R-3 vite build", vite, "vite build", "vite-build react vite vite-app "},
-		{"R-4 npm run dev", vite, "npm run dev", "vite-dev react npm vite-app "},
-		{"R-7 start: vite", vite, "npm start", "vite-dev react npm vite-app "},
-		{"R-8 workspace", mono, "npm run build -w apps/web", "vite-build vite npm @mono/web "},
-		{"R-8 --workspace=", mono, "npm --workspace=apps/web run build", "vite-build vite npm @mono/web "},
-		{"R-9 npm install", vite, "npm install", "-"},
-		{"R-9 npm test", vite, "npm test", "-"},
-		{"R-9 npm run lint", vite, "npm run lint", "-"},
-		{"vite preview", vite, "npm run preview", "-"},
-		{"iç içe script", vite, "npm run build:ci", "vite-build react npm vite-app "},
-		{"vite (react yok)", plainVite, "npm run dev", "vite-dev vite npm plain "},
-		{"vite --port 3000", plainVite, "vite --port 3000", "vite-dev vite vite plain "},
-
-		{"R-10 CRA npm start", cra, "npm start", "cra-start react npm cra-app "},
-		{"R-13 CRA build", cra, "npm run build", "cra-build react npm cra-app "},
-
-		{"X-1 next build", next, "npm run build", "next-build next npm next-app "},
-		{"X-2 next build --turbopack", next, "next build --turbopack", "next-build next next next-app "},
-		{"X-3 next dev", next, "npm run dev", "next-dev next npm next-app "},
-		{"X-9 next start", next, "npm run start", "-"},
-
-		{"N-1 dotnet build", dotnet, "dotnet build", "dotnet-build dotnet dotnet Shop "},
-		{"N-8 publish -c Release", dotnet, "dotnet publish -c Release Api/Api.csproj", "dotnet-build dotnet dotnet Api "},
-		{"N-5 dotnet run web", filepath.Join(dotnet, "Api"), "dotnet run", "dotnet-run dotnet dotnet Api "},
-		{"N-6 dotnet run console", filepath.Join(dotnet, "Tool"), "dotnet run", "dotnet-run dotnet dotnet Tool "},
-		{"N-6 --project", dotnet, "dotnet run --project Tool", "dotnet-run dotnet dotnet Tool "},
-		{"N-7 dotnet watch", filepath.Join(dotnet, "Api"), "dotnet watch run", "dotnet-watch dotnet dotnet Api "},
-		{"N-9 dotnet test", dotnet, "dotnet test", "dotnet-test dotnet dotnet Shop "},
-		{"dotnet restore", dotnet, "dotnet restore", "-"},
+	data, err := os.ReadFile(filepath.Join("..", "spec", "resolve-cases.json"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			r := resolve(strings.Fields(tc.cmd), tc.cwd)
+	var spec struct {
+		Files map[string]string `json:"files"`
+		Cases []struct {
+			Name, Cwd, Cmd, Want string
+			DotnetConsole        *bool `json:"dotnetConsole"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &spec); err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	for name, content := range spec.Files {
+		write(t, filepath.Join(root, filepath.FromSlash(name)), content)
+	}
+	for _, tc := range spec.Cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			r := resolve(strings.Fields(tc.Cmd), filepath.Join(root, filepath.FromSlash(tc.Cwd)))
 			got := "-"
 			if r != nil {
 				got = strings.Join([]string{r.Profile.ID, r.Tech, r.Tool, r.Project, r.Device}, " ")
 			}
-			if got != tc.want {
-				t.Errorf("%q → %q, beklenen %q", tc.cmd, got, tc.want)
+			if got != tc.Want {
+				t.Errorf("%q → %q, beklenen %q", tc.Cmd, got, tc.Want)
+			}
+			if tc.DotnetConsole != nil && (r == nil || r.DotnetConsole != *tc.DotnetConsole) {
+				t.Errorf("%q: DotnetConsole beklenen %v", tc.Cmd, *tc.DotnetConsole)
 			}
 		})
-	}
-
-	if r := resolve([]string{"dotnet", "run"}, filepath.Join(dotnet, "Tool")); r == nil || !r.DotnetConsole {
-		t.Error("konsol projesinde dotnet run, build bitişini hazır anı saymalı")
-	}
-	if r := resolve([]string{"dotnet", "run"}, filepath.Join(dotnet, "Api")); r == nil || r.DotnetConsole {
-		t.Error("web projesinde dotnet run, Now listening on: satırını beklemeli")
 	}
 }
 

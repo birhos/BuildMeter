@@ -24,3 +24,6 @@ RELEASE.md
 samples/
 samples/**/bin/
 samples/**/obj/
+
+# Paketleme sırasında wrapper/profiles.json dosyasından kopyalanır
+vscode-extension/profiles.json

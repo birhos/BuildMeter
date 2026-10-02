@@ -30,7 +30,7 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 | --- | --- | --- |
 | Terminal wrapper | A single `buildmeter` binary (macOS, Windows, Linux) behind thin zsh, bash and PowerShell shims. Run and dev commands are timed until the app reports it is ready; build commands are timed to the end. See [the command table](#tracked-commands). | [`wrapper/`](wrapper), [`cli/`](cli) |
 | MSBuild hook | Every .NET project build, whether it comes from `dotnet build`, Rider or Visual Studio; design-time builds are skipped | [`cli/msbuild/`](cli/msbuild) |
-| Editor extension | For Flutter sessions started with F5 / "Start Debugging" in VS Code, Cursor and Antigravity, the time until the `flutter.appStarted` event | [`vscode-extension/`](vscode-extension) |
+| Editor extension | In VS Code, Cursor and Antigravity: debug sessions (Flutter, .NET, Node dev servers), build tasks, and commands typed in the integrated terminal through shell integration. Tags the editor's terminals so the wrapper and the MSBuild hook record the editor as the source. | [`vscode-extension/`](vscode-extension) |
 | macOS app + widget | Live timer in the menu bar, today's total, a 7-day chart, breakdown by project and source; small and medium desktop widgets | [`macos/`](macos) |
 
 ## Requirements
@@ -40,7 +40,7 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`, only for building the app from source
 - zsh or bash (macOS, Linux, Git Bash) or PowerShell 5.1+ (Windows), for the terminal wrapper
 - Go 1.23+, only for building the terminal wrapper from source
-- Node.js (the extension is packaged with `npx`) and VS Code 1.80+, Cursor or Antigravity, for the editor extension
+- Node.js (the extension is packaged with `npx`) and VS Code 1.93+, Cursor or Antigravity, for the editor extension
 
 ## Installation
 

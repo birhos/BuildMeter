@@ -1,7 +1,7 @@
 {
   "name": "buildmeter",
   "displayName": "BuildMeter",
-  "description": "Measures how long Flutter debug sessions take until the app is up, and feeds the results to the BuildMeter macOS app.",
+  "description": "Measures how long builds, dev servers and debug sessions take until the app is up (Flutter, .NET, React, Next.js), and feeds the results to the BuildMeter app.",
   "version": "1.0.0",
   "publisher": "HaydarDemir",
   "icon": "icon.png",
@@ -15,7 +15,7 @@
     "url": "https://github.com/birhos/BuildMeter"
   },
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.93.0"
   },
   "categories": [
     "Debuggers",
@@ -23,15 +23,22 @@
   ],
   "keywords": [
     "flutter",
+    "dotnet",
+    "react",
+    "nextjs",
+    "vite",
     "build time",
     "productivity",
-    "dart",
     "debug"
   ],
   "activationEvents": [
     "onStartupFinished"
   ],
   "main": "./extension.js",
+  "scripts": {
+    "vscode:prepublish": "node -e \"require('fs').copyFileSync('../wrapper/profiles.json', 'profiles.json')\"",
+    "test": "node --test test/*.test.js"
+  },
   "contributes": {
     "commands": [
       {

@@ -1,0 +1,249 @@
+{
+  "$comment": "Komut çözümleme vakaları. Wrapper (resolve_test.go) ve editör eklentisi (test/resolve.test.js) aynı vakaları doğrular. files: geçici klasörde oluşturulan proje ağacı; want: \"profil tech araç proje cihaz\" ya da kayıt yoksa \"-\".",
+  "files": {
+    "flutter_app/pubspec.yaml": "name: my_app # yorum\nversion: 1.0.0\n",
+    "flutter_app/lib/main.dart": "",
+    "react-vite/package.json": "{\"name\": \"vite-app\", \"scripts\": {\"dev\": \"vite\", \"build\": \"tsc -b && vite build\", \"start\": \"vite\", \"preview\": \"vite preview\", \"lint\": \"eslint .\", \"test\": \"vitest\", \"build:ci\": \"cross-env NODE_ENV=production npm run build\"}, \"dependencies\": {\"react\": \"^19\"}}",
+    "react-cra/package.json": "{\"name\": \"cra-app\", \"scripts\": {\"start\": \"react-scripts start\", \"build\": \"react-scripts build\"}, \"dependencies\": {\"react\": \"^18\"}}",
+    "next-app/package.json": "{\"name\": \"next-app\", \"scripts\": {\"dev\": \"next dev --turbopack\", \"build\": \"next build\", \"start\": \"next start\"}, \"dependencies\": {\"next\": \"15\", \"react\": \"^19\"}}",
+    "mono/package.json": "{\"name\": \"mono\", \"workspaces\": [\"apps/*\"]}",
+    "mono/apps/web/package.json": "{\"name\": \"@mono/web\", \"scripts\": {\"build\": \"vite build\"}}",
+    "plain-vite/package.json": "{\"name\": \"plain\", \"scripts\": {\"dev\": \"vite\"}}",
+    "dotnet/Shop.sln": "",
+    "dotnet/Api/Api.csproj": "<Project Sdk=\"Microsoft.NET.Sdk.Web\"></Project>",
+    "dotnet/Tool/Tool.csproj": "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>"
+  },
+  "cases": [
+    {
+      "name": "F-1 flutter run",
+      "cwd": "flutter_app",
+      "cmd": "flutter run -d ios",
+      "want": "flutter-run flutter flutter my_app ios"
+    },
+    {
+      "name": "F-1 --device-id=",
+      "cwd": "flutter_app",
+      "cmd": "flutter run --device-id=emulator-5554",
+      "want": "flutter-run flutter flutter my_app emulator-5554"
+    },
+    {
+      "name": "F-2 fvm flutter run",
+      "cwd": "flutter_app",
+      "cmd": "fvm flutter run -d macos",
+      "want": "flutter-run flutter fvm my_app macos"
+    },
+    {
+      "name": "F-2 fvm spawn",
+      "cwd": "flutter_app",
+      "cmd": "fvm spawn 3.24.0 run -d chrome",
+      "want": "flutter-run flutter fvm my_app chrome"
+    },
+    {
+      "name": "F-3 flutter build apk",
+      "cwd": "flutter_app",
+      "cmd": "flutter build apk --release",
+      "want": "flutter-build flutter flutter my_app apk"
+    },
+    {
+      "name": "F-8 alt klasör",
+      "cwd": "flutter_app/lib",
+      "cmd": "flutter run",
+      "want": "flutter-run flutter flutter my_app "
+    },
+    {
+      "name": "flutter pub get",
+      "cwd": "flutter_app",
+      "cmd": "flutter pub get",
+      "want": "-"
+    },
+    {
+      "name": "R-1 npm run build",
+      "cwd": "react-vite",
+      "cmd": "npm run build",
+      "want": "vite-build react npm vite-app "
+    },
+    {
+      "name": "R-2 pnpm build",
+      "cwd": "react-vite",
+      "cmd": "pnpm build",
+      "want": "vite-build react pnpm vite-app "
+    },
+    {
+      "name": "R-2 yarn build",
+      "cwd": "react-vite",
+      "cmd": "yarn build",
+      "want": "vite-build react yarn vite-app "
+    },
+    {
+      "name": "R-2 bun run build",
+      "cwd": "react-vite",
+      "cmd": "bun run build",
+      "want": "vite-build react bun vite-app "
+    },
+    {
+      "name": "R-3 npx vite build",
+      "cwd": "react-vite",
+      "cmd": "npx vite build",
+      "want": "vite-build react npx vite-app "
+    },
+    {
+      "name": "R-3 vite build",
+      "cwd": "react-vite",
+      "cmd": "vite build",
+      "want": "vite-build react vite vite-app "
+    },
+    {
+      "name": "R-4 npm run dev",
+      "cwd": "react-vite",
+      "cmd": "npm run dev",
+      "want": "vite-dev react npm vite-app "
+    },
+    {
+      "name": "R-7 start: vite",
+      "cwd": "react-vite",
+      "cmd": "npm start",
+      "want": "vite-dev react npm vite-app "
+    },
+    {
+      "name": "R-8 workspace",
+      "cwd": "mono",
+      "cmd": "npm run build -w apps/web",
+      "want": "vite-build vite npm @mono/web "
+    },
+    {
+      "name": "R-8 --workspace=",
+      "cwd": "mono",
+      "cmd": "npm --workspace=apps/web run build",
+      "want": "vite-build vite npm @mono/web "
+    },
+    {
+      "name": "R-9 npm install",
+      "cwd": "react-vite",
+      "cmd": "npm install",
+      "want": "-"
+    },
+    {
+      "name": "R-9 npm test",
+      "cwd": "react-vite",
+      "cmd": "npm test",
+      "want": "-"
+    },
+    {
+      "name": "R-9 npm run lint",
+      "cwd": "react-vite",
+      "cmd": "npm run lint",
+      "want": "-"
+    },
+    {
+      "name": "vite preview",
+      "cwd": "react-vite",
+      "cmd": "npm run preview",
+      "want": "-"
+    },
+    {
+      "name": "iç içe script",
+      "cwd": "react-vite",
+      "cmd": "npm run build:ci",
+      "want": "vite-build react npm vite-app "
+    },
+    {
+      "name": "vite (react yok)",
+      "cwd": "plain-vite",
+      "cmd": "npm run dev",
+      "want": "vite-dev vite npm plain "
+    },
+    {
+      "name": "vite --port 3000",
+      "cwd": "plain-vite",
+      "cmd": "vite --port 3000",
+      "want": "vite-dev vite vite plain "
+    },
+    {
+      "name": "R-10 CRA npm start",
+      "cwd": "react-cra",
+      "cmd": "npm start",
+      "want": "cra-start react npm cra-app "
+    },
+    {
+      "name": "R-13 CRA build",
+      "cwd": "react-cra",
+      "cmd": "npm run build",
+      "want": "cra-build react npm cra-app "
+    },
+    {
+      "name": "X-1 next build",
+      "cwd": "next-app",
+      "cmd": "npm run build",
+      "want": "next-build next npm next-app "
+    },
+    {
+      "name": "X-2 next build --turbopack",
+      "cwd": "next-app",
+      "cmd": "next build --turbopack",
+      "want": "next-build next next next-app "
+    },
+    {
+      "name": "X-3 next dev",
+      "cwd": "next-app",
+      "cmd": "npm run dev",
+      "want": "next-dev next npm next-app "
+    },
+    {
+      "name": "X-9 next start",
+      "cwd": "next-app",
+      "cmd": "npm run start",
+      "want": "-"
+    },
+    {
+      "name": "N-1 dotnet build",
+      "cwd": "dotnet",
+      "cmd": "dotnet build",
+      "want": "dotnet-build dotnet dotnet Shop "
+    },
+    {
+      "name": "N-8 publish -c Release",
+      "cwd": "dotnet",
+      "cmd": "dotnet publish -c Release Api/Api.csproj",
+      "want": "dotnet-build dotnet dotnet Api "
+    },
+    {
+      "name": "N-5 dotnet run web",
+      "cwd": "dotnet/Api",
+      "cmd": "dotnet run",
+      "want": "dotnet-run dotnet dotnet Api ",
+      "dotnetConsole": false
+    },
+    {
+      "name": "N-6 dotnet run console",
+      "cwd": "dotnet/Tool",
+      "cmd": "dotnet run",
+      "want": "dotnet-run dotnet dotnet Tool ",
+      "dotnetConsole": true
+    },
+    {
+      "name": "N-6 --project",
+      "cwd": "dotnet",
+      "cmd": "dotnet run --project Tool",
+      "want": "dotnet-run dotnet dotnet Tool ",
+      "dotnetConsole": true
+    },
+    {
+      "name": "N-7 dotnet watch",
+      "cwd": "dotnet/Api",
+      "cmd": "dotnet watch run",
+      "want": "dotnet-watch dotnet dotnet Api "
+    },
+    {
+      "name": "N-9 dotnet test",
+      "cwd": "dotnet",
+      "cmd": "dotnet test",
+      "want": "dotnet-test dotnet dotnet Shop "
+    },
+    {
+      "name": "dotnet restore",
+      "cwd": "dotnet",
+      "cmd": "dotnet restore",
+      "want": "-"
+    }
+  ]
+}
