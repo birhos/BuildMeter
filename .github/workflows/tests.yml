@@ -58,3 +58,18 @@ jobs:
           xcodegen generate --quiet
           xcodebuild -project BuildMeter.xcodeproj -scheme BuildMeter \
             -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO test
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Fixture testleri ve tepsi uygulaması
+        run: dotnet test BuildMeter.Windows.sln

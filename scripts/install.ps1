@@ -3,12 +3,14 @@
 #   2) PowerShell 5.1 ve 7 profil satırı, varsa Git Bash için ~/.bashrc satırı
 #   3) .NET için MSBuild hook'u (dotnet build, Rider, Visual Studio)
 #      -> %LOCALAPPDATA%\Microsoft\MSBuild\Current\Microsoft.Common.targets\ImportAfter
+#   4) Tepsi uygulaması (BuildMeter.exe)    -> %LOCALAPPDATA%\Programs\BuildMeter
+#      Başlat menüsü kısayolu ve oturum açılınca başlatma
 #
-# Repodan çalıştırılıp Go kuruluysa wrapper kaynaktan derlenir; değilse GitHub
-# release'inden indirilir ve checksum'ı doğrulanır.
+# Repodan çalıştırılıp Go kuruluysa wrapper, .NET SDK kuruluysa tepsi uygulaması kaynaktan
+# derlenir; değilse GitHub release'inden indirilir ve checksum'ı doğrulanır.
 #
 # Kullanım:
-#   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 [-Version v1.1.0]
+#   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 [-Version v1.1.0] [-NoApp]
 #   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Uninstall [-Purge]
 
 [CmdletBinding()]
@@ -16,7 +18,9 @@ param(
     [switch]$Uninstall,
     # -Uninstall ile birlikte kayıtlı verileri (~\.buildmeter) de siler.
     [switch]$Purge,
-    # Wrapper'ın indirileceği release; varsayılan en son sürüm.
+    # Tepsi uygulamasını kurma; yalnızca toplayıcılar.
+    [switch]$NoApp,
+    # Wrapper'ın ve tepsi uygulamasının indirileceği release; varsayılan en son sürüm.
     [string]$Version = 'latest'
 )
 
@@ -31,6 +35,11 @@ $BinDir = Join-Path $InstallDir 'bin'
 # MSBuild, kullanıcı düzeyindeki bu klasördeki .targets dosyalarını her projeye ekler.
 $ImportAfter = Join-Path $env:LOCALAPPDATA 'Microsoft\MSBuild\Current\Microsoft.Common.targets\ImportAfter'
 $HookPath = Join-Path $ImportAfter 'BuildMeter.targets'
+$AppDir = Join-Path $env:LOCALAPPDATA 'Programs\BuildMeter'
+$AppExe = Join-Path $AppDir 'BuildMeter.exe'
+$Shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'BuildMeter.lnk'
+$RunKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+$Arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }
 $Documents = [Environment]::GetFolderPath('MyDocuments')
 # CurrentUserAllHosts profilleri: Windows PowerShell 5.1 ve PowerShell 7.
 $Profiles = @(
@@ -67,6 +76,17 @@ function Remove-Lines([string]$Path, [string]$Marker) {
     Ok "$Path satırı kaldırıldı"
 }
 
+function Get-Checksums {
+    $sumsFile = Join-Path $env:TEMP 'buildmeter-checksums.txt'
+    Invoke-WebRequest -UseBasicParsing -Uri "$ReleaseBase/checksums.txt" -OutFile $sumsFile
+    $sums = @{}
+    foreach ($line in Get-Content $sumsFile) {
+        $parts = $line -split '\s+', 2
+        if ($parts.Count -eq 2) { $sums[$parts[1].TrimStart('*')] = $parts[0].ToLowerInvariant() }
+    }
+    return $sums
+}
+
 function Get-FromRelease([string]$Asset, [string]$Destination, [hashtable]$Checksums) {
     Invoke-WebRequest -UseBasicParsing -Uri "$ReleaseBase/$Asset" -OutFile $Destination
     $hash = (Get-FileHash -Algorithm SHA256 $Destination).Hash.ToLowerInvariant()
@@ -90,19 +110,12 @@ function Install-Wrapper {
         Copy-Item -Force (Join-Path $Root 'cli\buildmeter.sh') $InstallDir
         Ok 'Kaynaktan derlendi'
     } else {
-        $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }
-        $asset = "buildmeter-windows-$arch.exe"
-        $sumsFile = Join-Path $env:TEMP 'buildmeter-checksums.txt'
-        Invoke-WebRequest -UseBasicParsing -Uri "$ReleaseBase/checksums.txt" -OutFile $sumsFile
-        $sums = @{}
-        foreach ($line in Get-Content $sumsFile) {
-            $parts = $line -split '\s+', 2
-            if ($parts.Count -eq 2) { $sums[$parts[1].TrimStart('*')] = $parts[0].ToLowerInvariant() }
-        }
+        $asset = "buildmeter-windows-$Arch.exe"
+        $sums = Get-Checksums
         Get-FromRelease $asset $exe $sums
         Get-FromRelease 'buildmeter.ps1' (Join-Path $InstallDir 'buildmeter.ps1') $sums
         Get-FromRelease 'buildmeter.sh' (Join-Path $InstallDir 'buildmeter.sh') $sums
-        Ok "Release'ten indirildi ($Version, $arch)"
+        Ok "Release'ten indirildi ($Version, $Arch)"
     }
     $events = Join-Path $DataDir 'events.jsonl'
     if (-not (Test-Path $events)) { New-Item -ItemType File -Path $events | Out-Null }
@@ -134,8 +147,64 @@ function Install-DotnetHook {
     }
 }
 
+function Stop-App {
+    Get-Process -Name BuildMeter -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -eq $AppExe } |
+        ForEach-Object { $_.Kill(); $_.WaitForExit(5000) | Out-Null }
+}
+
+function Install-App {
+    Step "Tepsi uygulaması kuruluyor"
+    Stop-App
+    New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
+    $project = Join-Path $Root 'windows\BuildMeter.Tray\BuildMeter.Tray.csproj'
+    $rid = if ($Arch -eq 'arm64') { 'win-arm64' } else { 'win-x64' }
+
+    if ((Get-Command dotnet -ErrorAction SilentlyContinue) -and (Test-Path $project)) {
+        # SDK'nın Windows Desktop runtime'ı kullanılır; tek dosya, runtime gömülmez.
+        # Kurulumun kendi derlemesi MSBuild hook'u tarafından kaydedilmesin.
+        $disabled = $env:BUILDMETER_DISABLE
+        $env:BUILDMETER_DISABLE = '1'
+        try {
+            & dotnet publish $project -c Release -r $rid --self-contained false `
+                -p:PublishSingleFile=true -p:DebugType=none -o $AppDir --nologo -v quiet
+            if ($LASTEXITCODE -ne 0) { throw 'dotnet publish başarısız' }
+        } finally { $env:BUILDMETER_DISABLE = $disabled }
+        Ok 'Kaynaktan derlendi'
+    } else {
+        $asset = "BuildMeter-windows-$($rid.Substring(4)).zip"
+        $zip = Join-Path $env:TEMP $asset
+        Get-FromRelease $asset $zip (Get-Checksums)
+        Expand-Archive -Force -Path $zip -DestinationPath $AppDir
+        Remove-Item -Force $zip
+        Ok "Release'ten indirildi ($Version, $rid)"
+    }
+
+    $shell = New-Object -ComObject WScript.Shell
+    $link = $shell.CreateShortcut($Shortcut)
+    $link.TargetPath = $AppExe
+    $link.WorkingDirectory = $AppDir
+    $link.Description = 'Build bekleme süreleri'
+    $link.Save()
+    Ok 'Başlat menüsüne eklendi'
+
+    # -Force var olan anahtarı yeniden oluşturup diğer başlangıç kayıtlarını siler; kullanılmaz.
+    if (-not (Test-Path $RunKey)) { New-Item -Path $RunKey | Out-Null }
+    Set-ItemProperty -Path $RunKey -Name 'BuildMeter' -Value "`"$AppExe`" --background"
+    Ok 'Oturum açılınca başlayacak (tepsi menüsünden kapatılabilir)'
+
+    Start-Process -FilePath $AppExe
+    Ok 'Başlatıldı; simgesi görev çubuğunun bildirim alanında'
+}
+
 function Uninstall-BuildMeter {
     Step "BuildMeter kaldırılıyor"
+    Stop-App
+    Remove-ItemProperty -Path $RunKey -Name 'BuildMeter' -ErrorAction SilentlyContinue
+    foreach ($f in $Shortcut, $AppDir) {
+        if (Test-Path $f) { Remove-Item -Recurse -Force $f }
+    }
+    Ok "Tepsi uygulaması kaldırıldı"
     if (Test-Path $HookPath) { Remove-Item -Force $HookPath }
     Ok "MSBuild hook'u kaldırıldı"
     foreach ($p in $Profiles) { Remove-Lines $p '.buildmeter\buildmeter.ps1' }
@@ -155,6 +224,7 @@ if ($Uninstall) {
 } else {
     Install-Wrapper
     Install-DotnetHook
+    if (-not $NoApp) { Install-App }
     Step "Bitti"
     Write-Host "    Kayıtlar: $DataDir\events.jsonl"
     Write-Host "    Rapor:    buildmeter report --range week   (ya da $BinDir\buildmeter.exe)"

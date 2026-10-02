@@ -8,7 +8,7 @@
 
 </div>
 
-BuildMeter records how long you wait for Flutter, .NET, React (Vite, Create React App) and Next.js builds and dev servers, from the terminal, Rider, Visual Studio and your editor, until the app is up. Records are collected in `~/.buildmeter/events.jsonl`; a macOS menu bar app and widget turn them into daily, weekly and monthly summaries.
+BuildMeter records how long you wait for Flutter, .NET, React (Vite, Create React App) and Next.js builds and dev servers, from the terminal, Rider, Visual Studio and your editor, until the app is up. Records are collected in `~/.buildmeter/events.jsonl`; a macOS menu bar app and widget, and a Windows tray app, turn them into daily, weekly and monthly summaries.
 
 ## Screenshots
 
@@ -32,6 +32,7 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 | MSBuild hook | Every .NET project build, whether it comes from `dotnet build`, Rider or Visual Studio; design-time builds are skipped | [`cli/msbuild/`](cli/msbuild) |
 | Editor extension | In VS Code, Cursor and Antigravity: debug sessions (Flutter, .NET, Node dev servers), build tasks, and commands typed in the integrated terminal through shell integration. Tags the editor's terminals so the wrapper and the MSBuild hook record the editor as the source. | [`vscode-extension/`](vscode-extension) |
 | macOS app + widget | Live timer in the menu bar, today's total, a 7-day chart, breakdown by project and source; small and medium desktop widgets | [`macos/`](macos) |
+| Windows tray app | The same window as the macOS app, opened from the notification area: live timer, today's total, a 7-day chart, breakdowns by technology, source and project, copy report and CSV. The tray icon shows a dot and the running time while a build is in progress. | [`windows/`](windows) |
 
 ## Requirements
 
@@ -39,7 +40,9 @@ The menu bar window (left) and the medium desktop widget, in full color and as i
 - Xcode (`xcodebuild`), only for building the app from source
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`, only for building the app from source
 - zsh or bash (macOS, Linux, Git Bash) or PowerShell 5.1+ (Windows), for the terminal wrapper
+- Windows 10 or 11 (x64 or arm64), for the tray app
 - Go 1.23+, only for building the terminal wrapper from source
+- .NET 8 SDK, only for building the Windows tray app from source
 - Node.js (the extension is packaged with `npx`) and VS Code 1.93+, Cursor or Antigravity, for the editor extension
 
 ## Installation
@@ -82,6 +85,16 @@ curl -fsSL https://raw.githubusercontent.com/birhos/BuildMeter/main/scripts/inst
 
 Install the editor extension from source as described below (`scripts/install.sh --ext-only`).
 
+### Windows (Scoop)
+
+```powershell
+scoop install https://github.com/birhos/BuildMeter/releases/latest/download/buildmeter.json
+```
+
+The manifest installs the `buildmeter` wrapper, the tray app (Start menu > BuildMeter) and the MSBuild hook. To time terminal commands, add the line printed after installation to your PowerShell profile. To start the tray app at sign-in, turn on **Girişte başlat** in its menu.
+
+The tray app is a single self-contained `BuildMeter.exe` (no .NET runtime needed). It is also attached to each release as `BuildMeter-windows-x64.zip` and `BuildMeter-windows-arm64.zip`. It is not code-signed, so SmartScreen may warn on first launch: click **More info** > **Run anyway**.
+
 ### From source
 
 ```bash
@@ -100,10 +113,11 @@ scripts/install.sh --ext-only   # only the editor extension
 scripts/install.sh --dotnet     # only the MSBuild hook for .NET builds (dotnet build, Rider)
 ```
 
-On Windows, `scripts\install.ps1` installs the terminal wrapper (built from source when Go is available, otherwise downloaded from the latest release), adds the shim to the PowerShell 5.1 and 7 profiles and to `~/.bashrc` for Git Bash, and installs the MSBuild hook (dotnet build, Rider, Visual Studio):
+On Windows, `scripts\install.ps1` installs the terminal wrapper (built from source when Go is available, otherwise downloaded from the latest release), adds the shim to the PowerShell 5.1 and 7 profiles and to `~/.bashrc` for Git Bash, installs the MSBuild hook (dotnet build, Rider, Visual Studio), and installs the tray app to `%LOCALAPPDATA%\Programs\BuildMeter` (built from source when the .NET SDK is available) with a Start menu shortcut, starting it at sign-in:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -NoApp       # without the tray app
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Uninstall   # add -Purge to delete records
 ```
 
@@ -122,7 +136,7 @@ After installing:
 | Variable | Effect |
 | --- | --- |
 | `BUILDMETER_DISABLE` | When non-empty, the wrapper and the MSBuild hook record nothing and commands run directly: `export BUILDMETER_DISABLE=1` |
-| `BUILDMETER_DATA_DIR` | Data directory used by the terminal wrapper, the extension and the menu bar app (default `~/.buildmeter`). The widget always reads `~/.buildmeter`. |
+| `BUILDMETER_DATA_DIR` | Data directory used by the terminal wrapper, the extension, the menu bar app and the tray app (default `~/.buildmeter`, `%USERPROFILE%\.buildmeter` on Windows). The widget always reads `~/.buildmeter`. |
 
 ## Quick start
 
@@ -165,7 +179,7 @@ To view the raw records in your editor, run `BuildMeter: Olay kayıtlarını aç
 
 ## Reports
 
-Pick a range at the bottom of the menu bar window (today, yesterday, this week, last 7 days, this month, last month):
+Pick a range at the bottom of the menu bar window, or of the tray app window on Windows (today, yesterday, this week, last 7 days, this month, last month):
 
 - **Copy report** — copies a text summary to the clipboard: total wait time, build count, average and longest build, and breakdowns by day, source and project.
 - **CSV** — exports the sessions in the selected range as a CSV file.

@@ -1,8 +1,8 @@
 package main
 
-// Bu dosya macOS uygulamasındaki EventLog.swift ve Stats.swift ile aynı hesaplamayı yapar.
-// İki uygulama da spec/fixtures/ altındaki vakalarla doğrulanır; mantık değişirse ikisi
-// birlikte değişmelidir.
+// Bu dosya macOS uygulamasındaki EventLog.swift ve Stats.swift ile, Windows tepsi
+// uygulamasındaki windows/BuildMeter.Core ile aynı hesaplamayı yapar. Üçü de spec/fixtures/
+// altındaki vakalarla doğrulanır; mantık değişirse hepsi birlikte değişmelidir.
 
 import (
 	"bytes"

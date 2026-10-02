@@ -1,8 +1,9 @@
 name: Release wrapper
 
 # Bir GitHub release yayınlandığında terminal wrapper'ını macOS (universal), Windows
-# ve Linux için derler; shim'ler, MSBuild hook'u ve checksums.txt ile birlikte release'e
-# yükler. scripts/install-cli.sh ve scripts/install.ps1 bu dosyaları indirir.
+# ve Linux için, Windows tepsi uygulamasını x64 ve arm64 için derler; shim'ler, MSBuild
+# hook'u ve checksums.txt ile birlikte release'e yükler. scripts/install-cli.sh,
+# scripts/install.ps1 ve Scoop manifesti bu dosyaları indirir.
 on:
   release:
     types: [published]
@@ -16,7 +17,46 @@ permissions:
   contents: write
 
 jobs:
+  tray:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        working-directory: windows
+        run: dotnet test BuildMeter.Windows.sln
+
+      - name: Tepsi uygulamasını derle
+        working-directory: windows
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          New-Item -ItemType Directory -Force dist | Out-Null
+          foreach ($arch in 'x64', 'arm64') {
+            # Tek dosya, .NET runtime'ı gerektirmez.
+            dotnet publish BuildMeter.Tray -c Release -r "win-$arch" --self-contained `
+              -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+              -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$version `
+              -o "publish/$arch"
+            if ($LASTEXITCODE -ne 0) { throw "dotnet publish başarısız ($arch)" }
+            Compress-Archive -Path "publish/$arch/BuildMeter.exe" -DestinationPath "dist/BuildMeter-windows-$arch.zip"
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tray
+          path: windows/dist/*
+
   build:
+    needs: tray
     runs-on: macos-15
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
@@ -51,10 +91,18 @@ jobs:
           build linux amd64 buildmeter-linux-amd64
           build linux arm64 buildmeter-linux-arm64
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: tray
+          path: dist
+
       - name: Shim'ler, hook ve checksum'lar
         run: |
           cp cli/buildmeter.sh cli/buildmeter.ps1 cli/msbuild/BuildMeter.targets dist/
           cd dist && shasum -a 256 * > checksums.txt && cat checksums.txt
+
+      - name: Scoop manifesti
+        run: python3 packaging/scoop/fill_manifest.py packaging/scoop/buildmeter.json dist/checksums.txt "$TAG" dist/buildmeter.json
 
       - name: Release'e yükle
         run: gh release upload "$TAG" dist/* --clobber -R "$GITHUB_REPOSITORY"

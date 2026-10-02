@@ -1,0 +1,63 @@
+{
+    "##": "Şablon. .github/workflows/wrapper-release.yml sürümü, url'leri ve hash'leri checksums.txt'den doldurup release'e buildmeter.json olarak yükler.",
+    "version": "0.0.0",
+    "description": "Measure how long Flutter, .NET, React and Next.js builds take",
+    "homepage": "https://github.com/birhos/BuildMeter",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": [],
+            "hash": [],
+            "extract_to": ["", "app", "", ""]
+        },
+        "arm64": {
+            "url": [],
+            "hash": [],
+            "extract_to": ["", "app", "", ""]
+        }
+    },
+    "bin": "buildmeter.exe",
+    "shortcuts": [
+        ["app\\BuildMeter.exe", "BuildMeter"]
+    ],
+    "post_install": [
+        "# MSBuild hook'u: dotnet build, Rider ve Visual Studio build'lerini kaydeder.",
+        "$hook = \"$env:LOCALAPPDATA\\Microsoft\\MSBuild\\Current\\Microsoft.Common.targets\\ImportAfter\"",
+        "New-Item -ItemType Directory -Force -Path $hook | Out-Null",
+        "Copy-Item -Force \"$dir\\BuildMeter.targets\" $hook"
+    ],
+    "pre_uninstall": [
+        "Get-Process -Name BuildMeter -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*\\apps\\buildmeter\\*\\app\\BuildMeter.exe' } | Stop-Process -Force",
+        "Remove-Item -Force -ErrorAction SilentlyContinue \"$env:LOCALAPPDATA\\Microsoft\\MSBuild\\Current\\Microsoft.Common.targets\\ImportAfter\\BuildMeter.targets\""
+    ],
+    "notes": [
+        "To time terminal commands, add this line to your PowerShell profile ($PROFILE):",
+        "  $env:BUILDMETER_BIN = \"$dir\\buildmeter.exe\"; . \"$dir\\buildmeter.ps1\"",
+        "The MSBuild hook for .NET builds is installed. Start the tray app from the Start menu (BuildMeter);",
+        "turn on \"Girişte başlat\" in its menu to start it at sign-in. Report: buildmeter report --range week"
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": [
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/buildmeter-windows-amd64.exe#/buildmeter.exe",
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/BuildMeter-windows-x64.zip",
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/buildmeter.ps1",
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/BuildMeter.targets"
+                ]
+            },
+            "arm64": {
+                "url": [
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/buildmeter-windows-arm64.exe#/buildmeter.exe",
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/BuildMeter-windows-arm64.zip",
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/buildmeter.ps1",
+                    "https://github.com/birhos/BuildMeter/releases/download/v$version/BuildMeter.targets"
+                ]
+            }
+        },
+        "hash": {
+            "url": "$baseurl/checksums.txt"
+        }
+    }
+}

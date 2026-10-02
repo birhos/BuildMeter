@@ -9,6 +9,11 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 
+# Windows uygulaması (.NET)
+windows/**/bin/
+windows/**/obj/
+windows/dist/
+
 # VS Code eklentisi
 vscode-extension/*.vsix
 node_modules/
