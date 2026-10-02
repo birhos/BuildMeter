@@ -3,8 +3,9 @@
 #   1) macOS menü bar uygulaması + widget  -> /Applications
 #   2) Terminal wrapper'ı                   -> ~/.buildmeter + ~/.zshrc
 #   3) VS Code / Cursor / Antigravity eklentisi (seçilen editörlerin tüm profillerine)
+#   4) .NET için MSBuild hook'u (dotnet build, Rider)  -> MSBuild ImportAfter klasörü
 #
-# Kullanım: scripts/install.sh [--all | --app-only | --cli-only | --ext-only]
+# Kullanım: scripts/install.sh [--all | --app-only | --cli-only | --ext-only | --dotnet]
 # Parametresiz ve etkileşimli terminalde kurulacak adımlar menüden seçilir.
 
 # "sh install.sh" ile çağrıldıysa bash (POSIX modu dışında) ile yeniden başlat.
@@ -15,6 +16,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_DIR="$HOME/.buildmeter"
 APP_NAME="BuildMeter.app"
+# MSBuild, kullanıcı düzeyindeki bu klasördeki .targets dosyalarını her projeye ekler.
+MSBUILD_IMPORT_AFTER="$HOME/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
 ONLY="${1:-}"
 
 banner() {
@@ -23,7 +26,7 @@ banner() {
   printf '\n'
   printf '      %s▄▄%s▄▄▄%s▄▄%s▄▄%s\n'                      "$c" "$b" "$v" "$o" "$x"
   printf '   %s▄▀%s           %s▀▄%s     %sBuild%sMeter%s\n'  "$c" "$x" "$r" "$x" "$w" "$o" "$x"
-  printf '  %s█%s      %s●%s━━━━%s▶%s   %s█%s    %sFlutter build bekleme süresi ölçer%s\n' \
+  printf '  %s█%s      %s●%s━━━━%s▶%s   %s█%s    %sBuild bekleme süresi ölçer%s\n' \
          "$c" "$x" "$r" "$w" "$r" "$x" "$d" "$x" "$d" "$x"
   printf '   %s▀▄%s           %s▄▀%s\n'                        "$c" "$x" "$d" "$x"
   printf '\n'
@@ -127,6 +130,15 @@ install_cli() {
   fi
 }
 
+install_dotnet() {
+  step ".NET için MSBuild hook'u kuruluyor"
+  mkdir -p "$MSBUILD_IMPORT_AFTER" "$DATA_DIR"
+  install -m 644 "$ROOT/cli/msbuild/BuildMeter.targets" "$MSBUILD_IMPORT_AFTER/BuildMeter.targets"
+  touch "$DATA_DIR/events.jsonl"
+  ok "dotnet build ve Rider build'leri kaydedilecek"
+  command -v dotnet >/dev/null || warn "dotnet bulunamadı; hook SDK kurulduğunda devreye girer"
+}
+
 # VS Code tabanlı editörlerin profil adlarını listeler (User/globalStorage/storage.json).
 editor_profiles() {
   local storage="$1/User/globalStorage/storage.json"
@@ -210,10 +222,11 @@ multi_select() {
 
 DO_CLI=1
 DO_EXT=1
+DO_DOTNET=1
 
 # Kurulacak adımları kullanıcıya sorar. Uygulama her zaman kurulur.
 choose_steps() {
-  local editors=() labels=("!macOS uygulaması + widget" "CLI (terminal wrapper)") e
+  local editors=() labels=("!macOS uygulaması + widget" "CLI (terminal wrapper)" ".NET (MSBuild hook'u)") e
   while IFS= read -r e; do [ -n "$e" ] && editors+=("$e"); done < <(installed_editors | awk '!seen[$0]++')
   for e in "${editors[@]+"${editors[@]}"}"; do labels+=("Eklenti: $e"); done
 
@@ -221,13 +234,14 @@ choose_steps() {
   local picked=()
   multi_select picked "${labels[@]}"
 
-  DO_CLI=0; DO_EXT=0; SELECTED_EDITORS=()
+  DO_CLI=0; DO_EXT=0; DO_DOTNET=0; SELECTED_EDITORS=()
   local idx
   for idx in "${picked[@]+"${picked[@]}"}"; do
     case "$idx" in
       0) ;;
       1) DO_CLI=1 ;;
-      *) DO_EXT=1; SELECTED_EDITORS+=("${editors[idx - 2]}") ;;
+      2) DO_DOTNET=1 ;;
+      *) DO_EXT=1; SELECTED_EDITORS+=("${editors[idx - 3]}") ;;
     esac
   done
 }
@@ -238,11 +252,13 @@ case "$ONLY" in
   --app-only) install_app ;;
   --cli-only) install_cli ;;
   --ext-only) install_ext ;;
-  --all)      install_cli; install_ext; install_app ;;
+  --dotnet)   install_dotnet ;;
+  --all)      install_cli; install_dotnet; install_ext; install_app ;;
   "")
     # Etkileşimsiz çalıştırmada (ör. curl | bash) her şey kurulur.
     [ -t 0 ] && [ -t 1 ] && choose_steps
     [ "$DO_CLI" = 1 ] && install_cli
+    [ "$DO_DOTNET" = 1 ] && install_dotnet
     [ "$DO_EXT" = 1 ] && install_ext
     install_app
     ;;

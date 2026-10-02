@@ -19,3 +19,7 @@ node_modules/
 
 # Dosyalar
 RELEASE.md
+
+# Örnek projelerin derleme çıktıları
+samples/**/bin/
+samples/**/obj/

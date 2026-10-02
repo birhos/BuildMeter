@@ -89,6 +89,14 @@ scripts/install.sh --all        # everything
 scripts/install.sh --app-only   # only /Applications/BuildMeter.app
 scripts/install.sh --cli-only   # only ~/.buildmeter + the ~/.zshrc line
 scripts/install.sh --ext-only   # only the editor extension
+scripts/install.sh --dotnet     # only the MSBuild hook for .NET builds (dotnet build, Rider)
+```
+
+On Windows, `scripts\install.ps1` installs the MSBuild hook (dotnet build, Rider, Visual Studio):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Uninstall   # add -Purge to delete records
 ```
 
 After installing:
@@ -142,7 +150,7 @@ Concurrent builds count once toward the total wait time; when the plain sum diff
 ## Uninstalling
 
 ```bash
-scripts/uninstall.sh           # removes the app, extensions and wrapper; keeps your records
+scripts/uninstall.sh           # removes the app, extensions, wrapper and MSBuild hook; keeps your records
 scripts/uninstall.sh --purge   # also deletes ~/.buildmeter
 ```
 
