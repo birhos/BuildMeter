@@ -37,6 +37,10 @@ Her vaka `fixtures/<vaka>/` altında bir klasördür:
   0'dan büyük oturumları sayar. `byHost` yalnızca `host` alanı yazılmış kayıtları içerir.
 - `mergedTotal` örtüşen aralıkları bir kez sayar; `sumTotal` düz toplamdır.
 
+`fixtures/output/<profil id>/` altında araçların gerçek çıktıları durur (ör. `vite-dev/vite-8.3.2.txt`).
+Wrapper ve editör eklentisi, `profiles.json` içindeki hazır sinyalinin bu çıktılarda yakalandığını
+doğrular. Yeni bir araç sürümü çıktığında çıktısını sürüm adıyla buraya ekleyin.
+
 Vakalar `generate_fixtures.py` ile üretilir; yeni vaka eklerken betiği güncelleyip
 `python3 spec/generate_fixtures.py` çalıştırın.
 

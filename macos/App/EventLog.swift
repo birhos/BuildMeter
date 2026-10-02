@@ -121,6 +121,10 @@ enum SessionMerger {
             kind: primary.kind, project: primary.project, device: primary.device,
             start: members.map(\.start).min()!, end: nil, status: .running, pid: nil
         )
+        if merged.device?.isEmpty ?? true {
+            // Wrapper cihaz bilmez; MSBuild kaydının hedef çatısı ve konfigürasyonu kullanılır.
+            merged.device = members.last { !($0.device?.isEmpty ?? true) }?.device
+        }
 
         if !primary.isMSBuild {
             // Grubu wrapper açtı: bitişi ve sonucu wrapper bilir.

@@ -39,7 +39,9 @@ final class FixtureTests: XCTestCase {
 
     func testFixtures() throws {
         let cases = try FileManager.default.contentsOfDirectory(atPath: Self.fixturesURL.path)
-            .filter { !$0.hasPrefix(".") }
+            // output/ gibi expected.json'u olmayan klasörler vaka değildir.
+            .filter { FileManager.default.fileExists(atPath: Self.fixturesURL
+                .appendingPathComponent($0).appendingPathComponent("expected.json").path) }
             .sorted()
         XCTAssertFalse(cases.isEmpty, "Fixture bulunamadı: \(Self.fixturesURL.path)")
         for name in cases {

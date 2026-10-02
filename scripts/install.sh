@@ -115,18 +115,30 @@ install_app() {
 }
 
 install_cli() {
-  step "Terminal wrapper'ı kuruluyor"
+  step "Terminal wrapper'ı derleniyor"
+  command -v go >/dev/null || { warn "Go gerekli: brew install go (ya da scripts/install-cli.sh hazır binary'yi indirir)"; exit 1; }
   mkdir -p "$DATA_DIR/bin"
-  install -m 755 "$ROOT/cli/buildmeter-track" "$DATA_DIR/bin/buildmeter-track"
-  install -m 644 "$ROOT/cli/buildmeter.zsh" "$DATA_DIR/buildmeter.zsh"
+  (cd "$ROOT/wrapper" && go build -trimpath -ldflags "-s -w -X main.version=$(git -C "$ROOT" describe --tags --always 2>/dev/null || echo dev)" \
+    -o "$DATA_DIR/bin/buildmeter" .) || { warn "Derleme başarısız"; exit 1; }
+  # Eski bash wrapper'ının adı: bu adla çağrılan binary `track` gibi davranır.
+  ln -sf buildmeter "$DATA_DIR/bin/buildmeter-track"
+  ok "$DATA_DIR/bin/buildmeter kuruldu"
+
+  install -m 644 "$ROOT/cli/buildmeter.sh" "$DATA_DIR/buildmeter.sh"
+  install -m 644 "$ROOT/cli/buildmeter.sh" "$DATA_DIR/buildmeter.zsh"
   touch "$DATA_DIR/events.jsonl"
 
-  local line='source "$HOME/.buildmeter/buildmeter.zsh"'
-  if ! grep -qF ".buildmeter/buildmeter.zsh" "$HOME/.zshrc" 2>/dev/null; then
-    printf '\n# BuildMeter\n%s\n' "$line" >> "$HOME/.zshrc"
-    ok "~/.zshrc dosyasına eklendi (yeni terminal açın veya: source ~/.zshrc)"
+  add_rc_line "$HOME/.zshrc" 'source "$HOME/.buildmeter/buildmeter.zsh"' ".buildmeter/buildmeter.zsh"
+  [ -f "$HOME/.bashrc" ] && add_rc_line "$HOME/.bashrc" 'source "$HOME/.buildmeter/buildmeter.sh"' ".buildmeter/buildmeter.sh"
+  return 0
+}
+
+add_rc_line() { # dosya satır aranacak_metin
+  if grep -qF "$3" "$1" 2>/dev/null; then
+    ok "$(basename "$1") zaten ayarlı"
   else
-    ok "~/.zshrc zaten ayarlı"
+    printf '\n# BuildMeter\n%s\n' "$2" >> "$1"
+    ok "$(basename "$1") dosyasına eklendi (yeni terminal açın veya: source ~/$(basename "$1"))"
   fi
 }
 

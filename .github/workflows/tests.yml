@@ -6,6 +6,27 @@ on:
   pull_request:
 
 jobs:
+  wrapper:
+    strategy:
+      matrix:
+        os: [macos-15, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: wrapper/go.mod
+          cache-dependency-path: wrapper/go.sum
+
+      - name: Fixture, profil ve çözümleme testleri
+        run: |
+          go vet ./...
+          go test ./...
+
   macos:
     runs-on: macos-15
     defaults:
