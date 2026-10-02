@@ -1,0 +1,34 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 1,
+    "successCount": 1,
+    "mergedTotal": 40,
+    "sumTotal": 40,
+    "byTech": {
+      "dotnet": 40
+    },
+    "bySource": {
+      "terminal": 40
+    },
+    "byProject": {
+      "Proj4": 40
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "Proj4",
+        "tech": "dotnet",
+        "source": "terminal",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902840
+      }
+    ]
+  }
+}

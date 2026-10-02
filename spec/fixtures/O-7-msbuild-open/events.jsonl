@@ -1,0 +1,5 @@
+{"event": "start", "id": "open1", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "ts": 1790902800}
+{"event": "start", "id": "next", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "ts": 1790903100}
+{"event": "end", "id": "next", "start": 1790903100, "status": "success", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "ts": 1790903130}
+{"event": "start", "id": "open2", "source": "visualstudio", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "ts": 1790948000}
+{"event": "start", "id": "open3", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "ts": 1790949140}

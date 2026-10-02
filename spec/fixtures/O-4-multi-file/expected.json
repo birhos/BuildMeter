@@ -1,0 +1,48 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 2,
+    "successCount": 2,
+    "mergedTotal": 150,
+    "sumTotal": 150,
+    "byTech": {
+      "flutter": 60,
+      "dotnet": 90
+    },
+    "bySource": {
+      "terminal": 60,
+      "visualstudio": 90
+    },
+    "byProject": {
+      "app": 60,
+      "Api": 90
+    },
+    "byHost": {
+      "win-pc": 90
+    },
+    "sessions": [
+      {
+        "project": "app",
+        "tech": "flutter",
+        "source": "terminal",
+        "kind": "run",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902860
+      },
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "visualstudio",
+        "kind": "build",
+        "status": "success",
+        "start": 1790903000,
+        "end": 1790903090
+      }
+    ]
+  }
+}

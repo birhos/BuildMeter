@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: macos
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: XcodeGen kur
+        run: brew install xcodegen
+
+      - name: Fixture testleri
+        run: |
+          xcodegen generate --quiet
+          xcodebuild -project BuildMeter.xcodeproj -scheme BuildMeter \
+            -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO test

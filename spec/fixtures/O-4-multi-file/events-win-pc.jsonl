@@ -1,0 +1,4 @@
+{"event": "start", "id": "same", "source": "terminal", "project": "app", "ts": 1790902800}
+{"event": "end", "id": "same", "start": 1790902800, "status": "success", "source": "terminal", "project": "app", "ts": 1790902860}
+{"event": "start", "id": "w", "source": "visualstudio", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "host": "win-pc", "group": "g1", "ts": 1790903000}
+{"event": "end", "id": "w", "start": 1790903000, "status": "success", "source": "visualstudio", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "host": "win-pc", "group": "g1", "ts": 1790903090}

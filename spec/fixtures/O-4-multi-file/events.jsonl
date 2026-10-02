@@ -1,0 +1,2 @@
+{"event": "start", "id": "same", "source": "terminal", "project": "app", "ts": 1790902800}
+{"event": "end", "id": "same", "start": 1790902800, "status": "success", "source": "terminal", "project": "app", "ts": 1790902860}

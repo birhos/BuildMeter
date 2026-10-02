@@ -1,0 +1,54 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 3,
+    "successCount": 2,
+    "mergedTotal": 180,
+    "sumTotal": 230,
+    "byTech": {
+      "flutter": 230
+    },
+    "bySource": {
+      "terminal": 160,
+      "vscode": 70
+    },
+    "byProject": {
+      "app": 170,
+      "shop": 60
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "app",
+        "tech": "flutter",
+        "source": "terminal",
+        "kind": "run",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902900
+      },
+      {
+        "project": "app",
+        "tech": "flutter",
+        "source": "vscode",
+        "kind": "run",
+        "status": "success",
+        "start": 1790902850,
+        "end": 1790902920
+      },
+      {
+        "project": "shop",
+        "tech": "flutter",
+        "source": "terminal",
+        "kind": "build",
+        "status": "failed",
+        "start": 1790903800,
+        "end": 1790903860
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+{"event": "start", "id": "a", "source": "zed", "tech": "rust", "tool": "cargo", "kind": "build", "project": "cli", "ts": 1790902800}
+{"event": "end", "id": "a", "start": 1790902800, "status": "success", "source": "zed", "tech": "rust", "tool": "cargo", "kind": "build", "project": "cli", "ts": 1790902830}
+{"event": "start", "id": "b", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "device": "net8.0|Debug", "ts": 1790902900}
+{"event": "end", "id": "b", "start": 1790902900, "status": "success", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Api", "device": "net8.0|Debug", "ts": 1790902940}

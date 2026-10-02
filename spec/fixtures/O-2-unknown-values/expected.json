@@ -1,0 +1,46 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 2,
+    "successCount": 2,
+    "mergedTotal": 70,
+    "sumTotal": 70,
+    "byTech": {
+      "other": 30,
+      "dotnet": 40
+    },
+    "bySource": {
+      "other": 30,
+      "rider": 40
+    },
+    "byProject": {
+      "cli": 30,
+      "Api": 40
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "cli",
+        "tech": "other",
+        "source": "other",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902830
+      },
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "rider",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902900,
+        "end": 1790902940
+      }
+    ]
+  }
+}

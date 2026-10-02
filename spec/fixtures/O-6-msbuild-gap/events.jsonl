@@ -1,0 +1,6 @@
+{"event": "start", "id": "a", "project": "Lib", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "solution": "/src/Shop.sln", "ts": 1790902800}
+{"event": "end", "id": "a", "start": 1790902800, "status": "success", "project": "Lib", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "solution": "/src/Shop.sln", "ts": 1790902810}
+{"event": "start", "id": "b", "project": "Api", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "solution": "/src/Shop.sln", "ts": 1790902811}
+{"event": "end", "id": "b", "start": 1790902811, "status": "success", "project": "Api", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "solution": "/src/Shop.sln", "ts": 1790902820}
+{"event": "start", "id": "c", "project": "Lib", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "solution": "/src/Shop.sln", "ts": 1790902825}
+{"event": "end", "id": "c", "start": 1790902825, "status": "success", "project": "Lib", "source": "rider", "tech": "dotnet", "tool": "msbuild", "kind": "build", "solution": "/src/Shop.sln", "ts": 1790902830}

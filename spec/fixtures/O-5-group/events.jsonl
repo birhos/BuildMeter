@@ -1,0 +1,10 @@
+{"event": "start", "id": "p0", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj0", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902800}
+{"event": "end", "id": "p0", "start": 1790902800, "status": "success", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj0", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902808}
+{"event": "start", "id": "p1", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj1", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902801}
+{"event": "end", "id": "p1", "start": 1790902801, "status": "success", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj1", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902812}
+{"event": "start", "id": "p2", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj2", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902809}
+{"event": "end", "id": "p2", "start": 1790902809, "status": "success", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj2", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902820}
+{"event": "start", "id": "p3", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj3", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902813}
+{"event": "end", "id": "p3", "start": 1790902813, "status": "success", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj3", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902825}
+{"event": "start", "id": "p4", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj4", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902821}
+{"event": "end", "id": "p4", "start": 1790902821, "status": "success", "source": "terminal", "tech": "dotnet", "tool": "msbuild", "kind": "build", "project": "Proj4", "device": "net8.0|Debug", "group": "sln-1", "ts": 1790902840}
