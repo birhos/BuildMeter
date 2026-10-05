@@ -13,6 +13,9 @@ on:
       tag:
         description: "Sürüm etiketi (ör. v1.1.0)"
         required: true
+      ref:
+        description: "Derlenecek commit/dal (boşsa tag). Tag'den sonra düzeltilen bir derleme hatası için."
+        required: false
 
 permissions:
   contents: write
@@ -25,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ inputs.ref || env.TAG }}
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -78,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ inputs.ref || env.TAG }}
 
       - uses: actions/setup-java@v4
         with:
@@ -106,7 +109,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ inputs.ref || env.TAG }}
 
       - uses: actions/setup-go@v5
         with:
