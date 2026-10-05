@@ -100,4 +100,6 @@ jobs:
       - uses: microsoft/setup-msbuild@v2
 
       - name: VSIX
-        run: msbuild visualstudio/BuildMeter.VisualStudio/BuildMeter.VisualStudio.csproj /restore /p:Configuration=Release /v:minimal
+        run: |
+          msbuild visualstudio/BuildMeter.VisualStudio/BuildMeter.VisualStudio.csproj /restore /p:Configuration=Release /v:minimal
+          if (-not (Test-Path visualstudio/BuildMeter.VisualStudio/bin/Release/net472/BuildMeter.VisualStudio.vsix)) { throw '.vsix oluşmadı' }
