@@ -164,7 +164,7 @@ extension WidgetSnapshot {
             week: minutes.enumerated().map { i, m in
                 .init(day: Calendar.current.date(byAdding: .day, value: i - 6, to: today)!, total: m * 60)
             },
-            topProjects: [.init(project: "musteri_app", total: 30 * 60), .init(project: "kurye_app", total: 17 * 60)]
+            topProjects: [.init(project: "musteri_app", total: TimeInterval(30 * 60)), .init(project: "kurye_app", total: TimeInterval(17 * 60))]
         )
     }
 }
