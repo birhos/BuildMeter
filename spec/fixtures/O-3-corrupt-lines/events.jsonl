@@ -1,0 +1,9 @@
+bu bir json değil
+{"event":"start","id":"x","ts":
+{"event": "start", "id": "a", "source": "terminal", "project": "app", "ts": 1790902800}
+{"event": "end", "id": "a", "start": 1790902800, "status": "success", "source": "terminal", "project": "app", "ts": 1790902845}
+
+{"event":"end"}
+{"event": "start", "id": "b", "source": "terminal", "project": "app", "ts": 1790902900}
+{"event": "end", "id": "b", "start": 1790902900, "status": "success", "source": "terminal", "project": "app", "ts": 1790902910}
+{"event":"start","id":"half","ts":1790

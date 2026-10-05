@@ -10,8 +10,8 @@ settings:
     # Kendi Apple Developer Team ID'niz (Xcode > Settings > Accounts).
     DEVELOPMENT_TEAM: QLVD672J6F
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.1.0"
+    CURRENT_PROJECT_VERSION: "2"
     SWIFT_VERSION: "5.0"
     ENABLE_HARDENED_RUNTIME: YES
 
@@ -40,6 +40,24 @@ targets:
     dependencies:
       - target: BuildMeterWidget
         embed: true
+    scheme:
+      testTargets: [BuildMeterTests]
+
+  # Paylaşılan hesaplama mantığını spec/fixtures/ ile doğrular. Uygulamaya bağlı
+  # değildir; yalnızca saf mantık dosyalarını derler.
+  BuildMeterTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+      - App/BuildSession.swift
+      - App/EventLog.swift
+      - App/Stats.swift
+      - Shared/SharedModels.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.haydardemir.BuildMeter.Tests
+        GENERATE_INFOPLIST_FILE: YES
 
   BuildMeterWidget:
     type: app-extension

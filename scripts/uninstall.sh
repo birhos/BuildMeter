@@ -23,8 +23,13 @@ done
 echo "✓ Editör eklentileri kaldırıldı"
 
 sed -i '' '/# BuildMeter/d;/buildmeter\.zsh/d' "$HOME/.zshrc" 2>/dev/null
-rm -rf "$HOME/.buildmeter/bin" "$HOME/.buildmeter/buildmeter.zsh"
+sed -i '' '/# BuildMeter/d;/buildmeter\.sh/d' "$HOME/.bashrc" 2>/dev/null
+rm -rf "$HOME/.buildmeter/bin" "$HOME/.buildmeter/buildmeter.zsh" "$HOME/.buildmeter/buildmeter.sh"
 echo "✓ Terminal wrapper'ı kaldırıldı (yeni terminal açın)"
+
+rm -f "$HOME/Library/Application Support/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/BuildMeter.targets" \
+      "$HOME/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/BuildMeter.targets"
+echo "✓ MSBuild hook'u kaldırıldı"
 
 if [ "${1:-}" = "--purge" ]; then
   rm -rf "$HOME/.buildmeter"

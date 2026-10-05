@@ -1,0 +1,155 @@
+name: Release wrapper
+
+# Bir GitHub release yayınlandığında terminal wrapper'ını macOS (universal), Windows
+# ve Linux için, Windows tepsi uygulamasını x64 ve arm64 için, Rider plugin'ini ve Visual
+# Studio eklentisini (VSIX) derler; shim'ler, MSBuild hook'u ve checksums.txt ile birlikte
+# release'e yükler. scripts/install-cli.sh,
+# scripts/install.ps1 ve Scoop manifesti bu dosyaları indirir.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Sürüm etiketi (ör. v1.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  tray:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        working-directory: windows
+        run: dotnet test BuildMeter.Windows.sln
+
+      - name: Tepsi uygulamasını derle
+        working-directory: windows
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          New-Item -ItemType Directory -Force dist | Out-Null
+          foreach ($arch in 'x64', 'arm64') {
+            # Tek dosya, .NET runtime'ı gerektirmez.
+            dotnet publish BuildMeter.Tray -c Release -r "win-$arch" --self-contained `
+              -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+              -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$version `
+              -o "publish/$arch"
+            if ($LASTEXITCODE -ne 0) { throw "dotnet publish başarısız ($arch)" }
+            Compress-Archive -Path "publish/$arch/BuildMeter.exe" -DestinationPath "dist/BuildMeter-windows-$arch.zip"
+          }
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Visual Studio eklentisini derle
+        shell: pwsh
+        run: |
+          $version = $env:TAG.TrimStart('v')
+          $manifest = 'visualstudio/BuildMeter.VisualStudio/source.extension.vsixmanifest'
+          (Get-Content $manifest -Raw) -replace '(<Identity [^>]*Version=")[^"]+', "`${1}$version" | Set-Content $manifest -NoNewline
+          msbuild visualstudio/BuildMeter.VisualStudio/BuildMeter.VisualStudio.csproj /restore /p:Configuration=Release /p:Version=$version /v:minimal
+          if ($LASTEXITCODE -ne 0) { throw 'VSIX derlenemedi' }
+          Copy-Item visualstudio/BuildMeter.VisualStudio/bin/Release/net472/BuildMeter.VisualStudio.vsix windows/dist/BuildMeter.vsix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tray
+          path: windows/dist/*
+
+  rider-plugin:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    defaults:
+      run:
+        working-directory: rider-plugin
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Rider plugin'ini derle
+        run: |
+          ./gradlew test buildPlugin -PpluginVersion="${TAG#v}"
+          cp build/distributions/buildmeter-rider-*.zip build/BuildMeter-rider.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rider-plugin
+          path: rider-plugin/build/BuildMeter-rider.zip
+
+  build:
+    needs: [tray, rider-plugin]
+    runs-on: macos-15
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: wrapper/go.mod
+          cache-dependency-path: wrapper/go.sum
+
+      - name: Test
+        working-directory: wrapper
+        run: go test ./...
+
+      - name: Derle
+        working-directory: wrapper
+        run: |
+          mkdir -p ../dist
+          flags="-s -w -X main.version=${TAG}"
+          build() { GOOS=$1 GOARCH=$2 CGO_ENABLED=0 go build -trimpath -ldflags "$flags" -o "../dist/$3" .; }
+          build darwin amd64 buildmeter-darwin-amd64
+          build darwin arm64 buildmeter-darwin-arm64
+          lipo -create -output ../dist/buildmeter-darwin-universal \
+            ../dist/buildmeter-darwin-amd64 ../dist/buildmeter-darwin-arm64
+          rm ../dist/buildmeter-darwin-amd64 ../dist/buildmeter-darwin-arm64
+          build windows amd64 buildmeter-windows-amd64.exe
+          build windows arm64 buildmeter-windows-arm64.exe
+          build linux amd64 buildmeter-linux-amd64
+          build linux arm64 buildmeter-linux-arm64
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tray
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: rider-plugin
+          path: dist
+
+      - name: Shim'ler, hook ve checksum'lar
+        run: |
+          cp cli/buildmeter.sh cli/buildmeter.ps1 cli/msbuild/BuildMeter.targets dist/
+          cd dist && shasum -a 256 * > checksums.txt && cat checksums.txt
+
+      - name: Scoop manifesti
+        run: python3 packaging/scoop/fill_manifest.py packaging/scoop/buildmeter.json dist/checksums.txt "$TAG" dist/buildmeter.json
+
+      - name: Release'e yükle
+        run: gh release upload "$TAG" dist/* --clobber -R "$GITHUB_REPOSITORY"

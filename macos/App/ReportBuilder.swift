@@ -32,7 +32,8 @@ enum ReportBuilder {
             : "\(shortDay.string(from: s.interval.start)) – \(shortDay.string(from: lastDay))"
 
         var lines: [String] = []
-        lines.append("BuildMeter · Flutter Build Bekleme Raporu (\(s.range.title))")
+        let scope = stats.tech.map { "\($0.title) " } ?? ""
+        lines.append("BuildMeter · \(scope)Build Bekleme Raporu (\(s.range.title))")
         lines.append(period)
         lines.append("")
         lines.append("• Toplam bekleme süresi: \(DurationFormat.long(s.mergedTotal))")
@@ -64,6 +65,25 @@ enum ReportBuilder {
             }
         }
 
+        if stats.tech == nil && !s.byTech.isEmpty {
+            lines.append("")
+            lines.append("Teknolojiye göre:")
+            for (tech, t) in s.byTech {
+                let n = s.sessions.filter { $0.tech == tech }.count
+                lines.append("  - \(tech.title): \(DurationFormat.long(t)) (\(n) build)")
+            }
+        }
+        let machines = Set(s.sessions.map(\.machine))
+        if machines.count > 1 {
+            lines.append("")
+            lines.append("Makineye göre:")
+            for machine in machines.sorted() {
+                let clipped = s.sessions
+                    .filter { $0.machine == machine }
+                    .compactMap { $0.interval(clippedTo: s.interval, now: stats.now) }
+                lines.append("  - \(machine): \(DurationFormat.long(Stats.mergedDuration(clipped)))")
+            }
+        }
         if !s.bySource.isEmpty {
             lines.append("")
             lines.append("Kaynağa göre:")
@@ -84,7 +104,7 @@ enum ReportBuilder {
 
     static func csv(stats: Stats, range: ReportRange) -> String {
         let s = stats.summary(range)
-        var rows = ["baslangic;bitis;sure_sn;sure;proje;kaynak;tur;cihaz;durum"]
+        var rows = ["baslangic;bitis;sure_sn;sure;proje;teknoloji;arac;kaynak;tur;cihaz;durum;makine"]
         for session in s.sessions.sorted(by: { $0.start < $1.start }) {
             let d = session.duration(now: stats.now)
             rows.append([
@@ -93,10 +113,13 @@ enum ReportBuilder {
                 String(Int(d.rounded())),
                 DurationFormat.long(d),
                 session.project,
+                session.tech.title,
+                session.tool ?? "",
                 session.source.title,
                 session.kind,
                 session.device ?? "",
                 session.status.title,
+                session.machine,
             ].map(escape).joined(separator: ";"))
         }
         // Excel Türkçe yerel ayarı için UTF-8 BOM + noktalı virgül.
@@ -128,7 +151,7 @@ enum ReportBuilder {
         panel.allowedContentTypes = [.commaSeparatedText]
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
-        panel.nameFieldStringValue = "flutter-build-raporu-\(range.rawValue)-\(f.string(from: stats.now)).csv"
+        panel.nameFieldStringValue = "\(stats.tech.map { "\($0.rawValue)-" } ?? "")build-raporu-\(range.rawValue)-\(f.string(from: stats.now)).csv"
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         try? csv(stats: stats, range: range).write(to: url, atomically: true, encoding: .utf8)

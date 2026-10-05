@@ -30,6 +30,7 @@ struct Summary {
     var longest: TimeInterval
     var average: TimeInterval
     var bySource: [(key: BuildSource, value: TimeInterval)]
+    var byTech: [(key: BuildTech, value: TimeInterval)]
     var byProject: [(key: String, value: TimeInterval)]
 }
 
@@ -37,12 +38,20 @@ struct Summary {
 struct Stats {
     let sessions: [BuildSession]
     let now: Date
+    /// Seçili teknoloji filtresi; `nil` tümü demektir.
+    var tech: BuildTech?
     var calendar: Calendar = {
         var c = Calendar(identifier: .gregorian)
         c.locale = Locale(identifier: "tr_TR")
         c.firstWeekday = 2 // Pazartesi
         return c
     }()
+
+    init(sessions: [BuildSession], now: Date, tech: BuildTech? = nil) {
+        self.sessions = tech.map { t in sessions.filter { $0.tech == t } } ?? sessions
+        self.now = now
+        self.tech = tech
+    }
 
     func range(_ r: ReportRange) -> (range: ReportRange, interval: DateInterval) {
         let cal = calendar
@@ -77,10 +86,12 @@ struct Stats {
         let clipped = relevant.compactMap { $0.interval(clippedTo: window, now: now) }
 
         var bySource: [BuildSource: TimeInterval] = [:]
+        var byTech: [BuildTech: TimeInterval] = [:]
         var byProject: [String: TimeInterval] = [:]
         for s in relevant {
             let d = s.interval(clippedTo: window, now: now)?.duration ?? 0
             bySource[s.source, default: 0] += d
+            byTech[s.tech, default: 0] += d
             byProject[s.project, default: 0] += d
         }
         let finished = relevant.filter { !$0.isActive }
@@ -96,6 +107,7 @@ struct Stats {
             longest: durations.max() ?? 0,
             average: durations.isEmpty ? 0 : durations.reduce(0, +) / Double(durations.count),
             bySource: bySource.sorted { $0.value > $1.value },
+            byTech: byTech.sorted { $0.value > $1.value },
             byProject: byProject.sorted { $0.value > $1.value }
         )
     }

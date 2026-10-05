@@ -1,0 +1,44 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 2,
+    "successCount": 2,
+    "mergedTotal": 25,
+    "sumTotal": 25,
+    "byTech": {
+      "dotnet": 25
+    },
+    "bySource": {
+      "rider": 25
+    },
+    "byProject": {
+      "Api": 20,
+      "Lib": 5
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "rider",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902820
+      },
+      {
+        "project": "Lib",
+        "tech": "dotnet",
+        "source": "rider",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902825,
+        "end": 1790902830
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 2,
+    "successCount": 2,
+    "mergedTotal": 90,
+    "sumTotal": 120,
+    "byTech": {
+      "dotnet": 60,
+      "next": 60
+    },
+    "bySource": {
+      "terminal": 60,
+      "vscode": 60
+    },
+    "byProject": {
+      "Api": 60,
+      "web": 60
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "terminal",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902860
+      },
+      {
+        "project": "web",
+        "tech": "next",
+        "source": "vscode",
+        "kind": "dev",
+        "status": "success",
+        "start": 1790902830,
+        "end": 1790902890
+      }
+    ]
+  }
+}

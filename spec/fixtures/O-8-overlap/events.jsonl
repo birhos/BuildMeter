@@ -1,0 +1,4 @@
+{"event": "start", "id": "d", "source": "terminal", "tech": "dotnet", "tool": "dotnet", "kind": "build", "project": "Api", "ts": 1790902800}
+{"event": "end", "id": "d", "start": 1790902800, "status": "success", "source": "terminal", "tech": "dotnet", "tool": "dotnet", "kind": "build", "project": "Api", "ts": 1790902860}
+{"event": "start", "id": "n", "source": "vscode", "tech": "next", "tool": "npm", "kind": "dev", "project": "web", "ts": 1790902830}
+{"event": "end", "id": "n", "start": 1790902830, "status": "success", "source": "vscode", "tech": "next", "tool": "npm", "kind": "dev", "project": "web", "ts": 1790902890}

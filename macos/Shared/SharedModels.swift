@@ -6,10 +6,18 @@ enum BuildSource: String, Codable, CaseIterable, Hashable {
     case terminal
     case vscode
     case cursor
+    case antigravity
+    case rider
+    case visualstudio
     case other
 
     init(raw: String?) {
         self = BuildSource(rawValue: raw ?? "") ?? .other
+    }
+
+    /// Bilinmeyen değerler (daha yeni bir toplayıcıdan gelen kaynaklar) `.other` olur.
+    init(from decoder: Decoder) throws {
+        self.init(raw: try decoder.singleValueContainer().decode(String.self))
     }
 
     var title: String {
@@ -17,6 +25,9 @@ enum BuildSource: String, Codable, CaseIterable, Hashable {
         case .terminal: return "Terminal"
         case .vscode: return "VS Code"
         case .cursor: return "Cursor"
+        case .antigravity: return "Antigravity"
+        case .rider: return "Rider"
+        case .visualstudio: return "Visual Studio"
         case .other: return "Diğer"
         }
     }
@@ -26,6 +37,50 @@ enum BuildSource: String, Codable, CaseIterable, Hashable {
         case .terminal: return "terminal"
         case .vscode: return "chevron.left.forwardslash.chevron.right"
         case .cursor: return "cursorarrow.rays"
+        case .antigravity: return "arrow.up.circle"
+        case .rider: return "hammer"
+        case .visualstudio: return "square.stack.3d.up"
+        case .other: return "questionmark.circle"
+        }
+    }
+}
+
+/// Build'i yapılan teknoloji. Alanı olmayan eski kayıtlar Flutter sayılır.
+enum BuildTech: String, Codable, CaseIterable, Hashable {
+    case flutter
+    case dotnet
+    case react
+    case next
+    case vite
+    case other
+
+    init(raw: String?) {
+        guard let raw, !raw.isEmpty else { self = .flutter; return }
+        self = BuildTech(rawValue: raw) ?? .other
+    }
+
+    init(from decoder: Decoder) throws {
+        self.init(raw: try decoder.singleValueContainer().decode(String.self))
+    }
+
+    var title: String {
+        switch self {
+        case .flutter: return "Flutter"
+        case .dotnet: return ".NET"
+        case .react: return "React"
+        case .next: return "Next.js"
+        case .vite: return "Vite"
+        case .other: return "Diğer"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .flutter: return "bird"
+        case .dotnet: return "number"
+        case .react: return "atom"
+        case .next: return "n.square"
+        case .vite: return "bolt"
         case .other: return "questionmark.circle"
         }
     }
@@ -36,6 +91,7 @@ struct WidgetSnapshot: Codable {
     struct Active: Codable, Hashable {
         var project: String
         var source: BuildSource
+        var tech: BuildTech?
         var start: Date
     }
 

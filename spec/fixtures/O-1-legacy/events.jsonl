@@ -1,0 +1,6 @@
+{"event": "start", "id": "a", "source": "terminal", "kind": "run", "project": "app", "device": "ios", "ts": 1790902800}
+{"event": "end", "id": "a", "start": 1790902800, "status": "success", "source": "terminal", "kind": "run", "project": "app", "device": "ios", "ts": 1790902900}
+{"event": "start", "id": "b", "source": "vscode", "kind": "run", "project": "app", "device": "android", "ts": 1790902850}
+{"event": "end", "id": "b", "start": 1790902850, "status": "success", "source": "vscode", "kind": "run", "project": "app", "device": "android", "ts": 1790902920}
+{"event": "start", "id": "c", "source": "terminal", "kind": "build", "project": "shop", "device": "apk", "ts": 1790903800}
+{"event": "end", "id": "c", "start": 1790903800, "status": "failed", "source": "terminal", "kind": "build", "project": "shop", "device": "apk", "ts": 1790903860}

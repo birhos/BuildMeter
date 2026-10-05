@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BuildMeter.VisualStudio</RootNamespace>
+    <AssemblyName>BuildMeter.VisualStudio</AssemblyName>
+    <Version>1.0.0</Version>
+
+    <!-- VSIX paketi (VSSDK yalnızca Windows'ta çalışır; diğer sistemlerde yalnızca kod derlenir). -->
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>true</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>true</CopyOutputSymbolsToOutputDirectory>
+    <DeployExtension Condition="'$(CI)' == 'true'">false</DeployExtension>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2142" Condition="'$(OS)' == 'Windows_NT'">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest" SubType="Designer" />
+    <Content Include="Resources\icon.png" IncludeInVSIX="true" />
+    <Content Include="..\..\LICENSE" Link="LICENSE" IncludeInVSIX="true" />
+    <!-- Hazır sinyalleri wrapper ve diğer toplayıcılarla aynı dosyadan okunur. -->
+    <EmbeddedResource Include="..\..\wrapper\profiles.json" LogicalName="profiles.json" />
+  </ItemGroup>
+
+</Project>

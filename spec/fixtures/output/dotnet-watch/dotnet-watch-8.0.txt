@@ -1,0 +1,16 @@
+dotnet watch 🔥 Hot reload enabled. For a list of supported edits, see https://aka.ms/dotnet/hot-reload.
+dotnet watch 🔧 Building...
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Sample.Lib -> /home/user/Desktop/BuildMeter/samples/dotnet/Sample.Lib/bin/Debug/net8.0/Sample.Lib.dll
+  Sample.Api -> /home/user/Desktop/BuildMeter/samples/dotnet/Sample.Api/bin/Debug/net8.0/Sample.Api.dll
+dotnet watch 🚀 Started
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5129
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /home/user/Desktop/BuildMeter/samples/dotnet/Sample.Api
+dotnet watch 🛑 Shutdown requested. Press Ctrl+C again to force exit.

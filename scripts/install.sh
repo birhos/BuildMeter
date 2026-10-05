@@ -3,8 +3,9 @@
 #   1) macOS menü bar uygulaması + widget  -> /Applications
 #   2) Terminal wrapper'ı                   -> ~/.buildmeter + ~/.zshrc
 #   3) VS Code / Cursor / Antigravity eklentisi (seçilen editörlerin tüm profillerine)
+#   4) .NET için MSBuild hook'u (dotnet build, Rider)  -> MSBuild ImportAfter klasörü
 #
-# Kullanım: scripts/install.sh [--all | --app-only | --cli-only | --ext-only]
+# Kullanım: scripts/install.sh [--all | --app-only | --cli-only | --ext-only | --dotnet]
 # Parametresiz ve etkileşimli terminalde kurulacak adımlar menüden seçilir.
 
 # "sh install.sh" ile çağrıldıysa bash (POSIX modu dışında) ile yeniden başlat.
@@ -15,6 +16,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DATA_DIR="$HOME/.buildmeter"
 APP_NAME="BuildMeter.app"
+# MSBuild, kullanıcı düzeyindeki bu klasörlerdeki .targets dosyalarını her projeye ekler.
+# .NET 8 ve sonrası macOS'ta ~/Library/Application Support'u, .NET 7 ve öncesi
+# ~/.local/share'i okur; her SDK yalnızca kendi klasörünü import eder.
+MSBUILD_IMPORT_AFTER_DIRS=(
+  "$HOME/Library/Application Support/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
+  "$HOME/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter"
+)
 ONLY="${1:-}"
 
 banner() {
@@ -23,7 +31,7 @@ banner() {
   printf '\n'
   printf '      %s▄▄%s▄▄▄%s▄▄%s▄▄%s\n'                      "$c" "$b" "$v" "$o" "$x"
   printf '   %s▄▀%s           %s▀▄%s     %sBuild%sMeter%s\n'  "$c" "$x" "$r" "$x" "$w" "$o" "$x"
-  printf '  %s█%s      %s●%s━━━━%s▶%s   %s█%s    %sFlutter build bekleme süresi ölçer%s\n' \
+  printf '  %s█%s      %s●%s━━━━%s▶%s   %s█%s    %sBuild bekleme süresi ölçer%s\n' \
          "$c" "$x" "$r" "$w" "$r" "$x" "$d" "$x" "$d" "$x"
   printf '   %s▀▄%s           %s▄▀%s\n'                        "$c" "$x" "$d" "$x"
   printf '\n'
@@ -112,19 +120,44 @@ install_app() {
 }
 
 install_cli() {
-  step "Terminal wrapper'ı kuruluyor"
+  step "Terminal wrapper'ı derleniyor"
+  command -v go >/dev/null || { warn "Go gerekli: brew install go (ya da scripts/install-cli.sh hazır binary'yi indirir)"; exit 1; }
   mkdir -p "$DATA_DIR/bin"
-  install -m 755 "$ROOT/cli/buildmeter-track" "$DATA_DIR/bin/buildmeter-track"
-  install -m 644 "$ROOT/cli/buildmeter.zsh" "$DATA_DIR/buildmeter.zsh"
+  (cd "$ROOT/wrapper" && go build -trimpath -ldflags "-s -w -X main.version=$(git -C "$ROOT" describe --tags --always 2>/dev/null || echo dev)" \
+    -o "$DATA_DIR/bin/buildmeter" .) || { warn "Derleme başarısız"; exit 1; }
+  # Eski bash wrapper'ının adı: bu adla çağrılan binary `track` gibi davranır.
+  ln -sf buildmeter "$DATA_DIR/bin/buildmeter-track"
+  ok "$DATA_DIR/bin/buildmeter kuruldu"
+
+  install -m 644 "$ROOT/cli/buildmeter.sh" "$DATA_DIR/buildmeter.sh"
+  install -m 644 "$ROOT/cli/buildmeter.sh" "$DATA_DIR/buildmeter.zsh"
   touch "$DATA_DIR/events.jsonl"
 
-  local line='source "$HOME/.buildmeter/buildmeter.zsh"'
-  if ! grep -qF ".buildmeter/buildmeter.zsh" "$HOME/.zshrc" 2>/dev/null; then
-    printf '\n# BuildMeter\n%s\n' "$line" >> "$HOME/.zshrc"
-    ok "~/.zshrc dosyasına eklendi (yeni terminal açın veya: source ~/.zshrc)"
+  add_rc_line "$HOME/.zshrc" 'source "$HOME/.buildmeter/buildmeter.zsh"' ".buildmeter/buildmeter.zsh"
+  [ -f "$HOME/.bashrc" ] && add_rc_line "$HOME/.bashrc" 'source "$HOME/.buildmeter/buildmeter.sh"' ".buildmeter/buildmeter.sh"
+  return 0
+}
+
+add_rc_line() { # dosya satır aranacak_metin
+  if grep -qF "$3" "$1" 2>/dev/null; then
+    ok "$(basename "$1") zaten ayarlı"
   else
-    ok "~/.zshrc zaten ayarlı"
+    printf '\n# BuildMeter\n%s\n' "$2" >> "$1"
+    ok "$(basename "$1") dosyasına eklendi (yeni terminal açın veya: source ~/$(basename "$1"))"
   fi
+}
+
+install_dotnet() {
+  step ".NET için MSBuild hook'u kuruluyor"
+  local dir
+  for dir in "${MSBUILD_IMPORT_AFTER_DIRS[@]}"; do
+    mkdir -p "$dir"
+    install -m 644 "$ROOT/cli/msbuild/BuildMeter.targets" "$dir/BuildMeter.targets"
+  done
+  mkdir -p "$DATA_DIR"
+  touch "$DATA_DIR/events.jsonl"
+  ok "dotnet build ve Rider build'leri kaydedilecek"
+  command -v dotnet >/dev/null || warn "dotnet bulunamadı; hook SDK kurulduğunda devreye girer"
 }
 
 # VS Code tabanlı editörlerin profil adlarını listeler (User/globalStorage/storage.json).
@@ -210,10 +243,11 @@ multi_select() {
 
 DO_CLI=1
 DO_EXT=1
+DO_DOTNET=1
 
 # Kurulacak adımları kullanıcıya sorar. Uygulama her zaman kurulur.
 choose_steps() {
-  local editors=() labels=("!macOS uygulaması + widget" "CLI (terminal wrapper)") e
+  local editors=() labels=("!macOS uygulaması + widget" "CLI (terminal wrapper)" ".NET (MSBuild hook'u)") e
   while IFS= read -r e; do [ -n "$e" ] && editors+=("$e"); done < <(installed_editors | awk '!seen[$0]++')
   for e in "${editors[@]+"${editors[@]}"}"; do labels+=("Eklenti: $e"); done
 
@@ -221,13 +255,14 @@ choose_steps() {
   local picked=()
   multi_select picked "${labels[@]}"
 
-  DO_CLI=0; DO_EXT=0; SELECTED_EDITORS=()
+  DO_CLI=0; DO_EXT=0; DO_DOTNET=0; SELECTED_EDITORS=()
   local idx
   for idx in "${picked[@]+"${picked[@]}"}"; do
     case "$idx" in
       0) ;;
       1) DO_CLI=1 ;;
-      *) DO_EXT=1; SELECTED_EDITORS+=("${editors[idx - 2]}") ;;
+      2) DO_DOTNET=1 ;;
+      *) DO_EXT=1; SELECTED_EDITORS+=("${editors[idx - 3]}") ;;
     esac
   done
 }
@@ -238,11 +273,13 @@ case "$ONLY" in
   --app-only) install_app ;;
   --cli-only) install_cli ;;
   --ext-only) install_ext ;;
-  --all)      install_cli; install_ext; install_app ;;
+  --dotnet)   install_dotnet ;;
+  --all)      install_cli; install_dotnet; install_ext; install_app ;;
   "")
     # Etkileşimsiz çalıştırmada (ör. curl | bash) her şey kurulur.
     [ -t 0 ] && [ -t 1 ] && choose_steps
     [ "$DO_CLI" = 1 ] && install_cli
+    [ "$DO_DOTNET" = 1 ] && install_dotnet
     [ "$DO_EXT" = 1 ] && install_ext
     install_app
     ;;

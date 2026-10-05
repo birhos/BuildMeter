@@ -7,8 +7,15 @@ struct MenuContentView: View {
     @State private var reportRange: ReportRange = .today
     @State private var copied = false
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var techFilter: BuildTech?
 
-    private var stats: Stats { Stats(sessions: store.sessions, now: store.now) }
+    private var stats: Stats { Stats(sessions: store.sessions, now: store.now, tech: techFilter) }
+
+    /// Kayıtlarda görülen teknolojiler; birden fazlaysa filtre gösterilir.
+    private var knownTechs: [BuildTech] {
+        let seen = Set(store.sessions.map(\.tech))
+        return BuildTech.allCases.filter(seen.contains)
+    }
 
     var body: some View {
         let today = stats.summary(.today)
@@ -16,6 +23,7 @@ struct MenuContentView: View {
             header
             if !store.active.isEmpty { activeSection }
             todaySection(today)
+            if techFilter == nil && today.byTech.count > 1 { techSection(today) }
             if !today.bySource.isEmpty { sourceSection(today) }
             weekChart
             if !today.byProject.isEmpty { projectSection(today) }
@@ -36,6 +44,14 @@ struct MenuContentView: View {
                 .frame(width: 22, height: 22)
             Text("BuildMeter").font(.headline)
             Spacer()
+            if knownTechs.count > 1 || techFilter != nil {
+                Picker("", selection: $techFilter) {
+                    Text("Tümü").tag(BuildTech?.none)
+                    ForEach(knownTechs, id: \.self) { Text($0.title).tag(BuildTech?.some($0)) }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
             Menu {
                 Toggle("Girişte başlat", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
@@ -57,13 +73,13 @@ struct MenuContentView: View {
     private var activeSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             sectionTitle("Şu an derleniyor")
-            ForEach(store.active) { s in
+            ForEach(store.active.filter { techFilter == nil || $0.tech == techFilter }) { s in
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
                     Image(systemName: s.source.symbol).foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(s.project).font(.callout.weight(.medium))
-                        Text([s.source.title, s.device].compactMap { $0 }.joined(separator: " · "))
+                        Text([s.tech.title, s.source.title, s.device].compactMap { $0 }.joined(separator: " · "))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -93,18 +109,34 @@ struct MenuContentView: View {
         }
     }
 
+    private func techSection(_ s: Summary) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            sectionTitle("Teknolojiye göre")
+            chips(s.byTech.map { ($0.key.symbol, $0.key.title, $0.value) })
+        }
+    }
+
     private func sourceSection(_ s: Summary) -> some View {
-        HStack(spacing: 8) {
-            ForEach(s.bySource, id: \.key) { item in
-                HStack(spacing: 5) {
-                    Image(systemName: item.key.symbol)
-                    Text(item.key.title)
-                    Text(DurationFormat.long(item.value)).fontWeight(.semibold)
-                }
-                .font(.caption)
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(.quaternary, in: Capsule())
+        chips(s.bySource.map { ($0.key.symbol, $0.key.title, $0.value) })
+    }
+
+    private func chips(_ items: [(symbol: String, title: String, value: TimeInterval)]) -> some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) { chipViews(items) }
+            VStack(alignment: .leading, spacing: 6) { chipViews(items) }
+        }
+    }
+
+    private func chipViews(_ items: [(symbol: String, title: String, value: TimeInterval)]) -> some View {
+        ForEach(items, id: \.title) { item in
+            HStack(spacing: 5) {
+                Image(systemName: item.symbol)
+                Text(item.title)
+                Text(DurationFormat.long(item.value)).fontWeight(.semibold)
             }
+            .font(.caption)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(.quaternary, in: Capsule())
         }
     }
 
@@ -162,11 +194,11 @@ struct MenuContentView: View {
     }
 
     private var recentSection: some View {
-        let recent = store.sessions.filter { !$0.isActive }.prefix(6)
+        let recent = stats.sessions.filter { !$0.isActive }.prefix(6)
         return VStack(alignment: .leading, spacing: 4) {
             sectionTitle("Son build'ler")
             if recent.isEmpty {
-                Text("Henüz kayıt yok. Terminalden `flutter run` ya da editörden debug başlatın.")
+                Text("Henüz kayıt yok. Terminalden `flutter run`, `dotnet build` ya da `npm run dev` çalıştırın veya editörden debug başlatın.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             ForEach(Array(recent)) { s in
@@ -175,9 +207,11 @@ struct MenuContentView: View {
                         .foregroundStyle(s.status == .success ? .green : (s.status == .failed ? .red : .secondary))
                         .help(s.status.title)
                     Image(systemName: s.source.symbol).foregroundStyle(.secondary).frame(width: 16)
+                        .help(s.source.title)
                     Text(s.project).lineLimit(1)
-                    if s.kind == "build" {
-                        Text("build").font(.caption2).padding(.horizontal, 4).background(.quaternary, in: Capsule())
+                        .help(s.tech.title)
+                    if s.kind != "run" {
+                        Text(s.kind).font(.caption2).padding(.horizontal, 4).background(.quaternary, in: Capsule())
                     }
                     Spacer()
                     Text(s.start, format: .dateTime.hour().minute())

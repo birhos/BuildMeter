@@ -1,0 +1,85 @@
+{
+  "$comment": "Komut -> profil -> hazır sinyali tablosu. Terminal wrapper'ı ve editör eklentisi bu dosyayı ortak kullanır. commands: [araç, ilk konumsal argüman]; \"\" argümansız, \"*\" başka profile uymayan herhangi bir argüman demektir. ready: çıktı satırlarında aranan düzenli ifadeler; boşsa komutun bitişi ölçülür. record: false ise wrapper kayıt yazmaz, yalnızca BUILDMETER_GROUP atar.",
+  "version": 1,
+  "profiles": [
+    {
+      "id": "flutter-run",
+      "tech": "flutter",
+      "kind": "run",
+      "commands": [["flutter", "run"]],
+      "ready": ["Flutter run key commands\\.", "Dart VM Service on .* is available at", "Application finished\\."]
+    },
+    {
+      "id": "flutter-build",
+      "tech": "flutter",
+      "kind": "build",
+      "commands": [["flutter", "build"]]
+    },
+    {
+      "id": "next-build",
+      "tech": "next",
+      "kind": "build",
+      "commands": [["next", "build"]]
+    },
+    {
+      "id": "next-dev",
+      "tech": "next",
+      "kind": "dev",
+      "commands": [["next", "dev"], ["next", ""]],
+      "ready": ["✓ Ready in", "^\\s*Ready in \\d", "ready - started server on"]
+    },
+    {
+      "id": "vite-build",
+      "tech": "vite",
+      "kind": "build",
+      "commands": [["vite", "build"]]
+    },
+    {
+      "id": "vite-dev",
+      "tech": "vite",
+      "kind": "dev",
+      "commands": [["vite", ""], ["vite", "dev"], ["vite", "serve"], ["vite", "*"]],
+      "ready": ["ready in \\d+(\\.\\d+)? ?ms"]
+    },
+    {
+      "id": "cra-build",
+      "tech": "react",
+      "kind": "build",
+      "commands": [["react-scripts", "build"]]
+    },
+    {
+      "id": "cra-start",
+      "tech": "react",
+      "kind": "dev",
+      "commands": [["react-scripts", "start"]],
+      "ready": ["Compiled successfully", "webpack compiled", "Compiled with warnings"]
+    },
+    {
+      "id": "dotnet-build",
+      "tech": "dotnet",
+      "kind": "build",
+      "commands": [["dotnet", "build"], ["dotnet", "publish"]]
+    },
+    {
+      "id": "dotnet-run",
+      "tech": "dotnet",
+      "kind": "run",
+      "commands": [["dotnet", "run"]],
+      "ready": ["Now listening on:", "Application started\\."]
+    },
+    {
+      "id": "dotnet-watch",
+      "tech": "dotnet",
+      "kind": "watch",
+      "commands": [["dotnet", "watch"]],
+      "ready": ["dotnet watch .{0,4}Started"]
+    },
+    {
+      "id": "dotnet-test",
+      "tech": "dotnet",
+      "kind": "build",
+      "commands": [["dotnet", "test"]],
+      "record": false
+    }
+  ]
+}

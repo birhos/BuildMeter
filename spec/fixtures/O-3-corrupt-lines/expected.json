@@ -1,0 +1,43 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 2,
+    "successCount": 2,
+    "mergedTotal": 55,
+    "sumTotal": 55,
+    "byTech": {
+      "flutter": 55
+    },
+    "bySource": {
+      "terminal": 55
+    },
+    "byProject": {
+      "app": 55
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "app",
+        "tech": "flutter",
+        "source": "terminal",
+        "kind": "run",
+        "status": "success",
+        "start": 1790902800,
+        "end": 1790902845
+      },
+      {
+        "project": "app",
+        "tech": "flutter",
+        "source": "terminal",
+        "kind": "run",
+        "status": "success",
+        "start": 1790902900,
+        "end": 1790902910
+      }
+    ]
+  }
+}

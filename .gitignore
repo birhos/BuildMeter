@@ -9,6 +9,21 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 
+# Windows uygulaması (.NET)
+windows/**/bin/
+windows/**/obj/
+windows/dist/
+
+# Rider plugin'i (Gradle)
+rider-plugin/build/
+rider-plugin/.gradle/
+rider-plugin/.kotlin/
+rider-plugin/.intellijPlatform/
+
+# Visual Studio eklentisi
+visualstudio/**/bin/
+visualstudio/**/obj/
+
 # VS Code eklentisi
 vscode-extension/*.vsix
 node_modules/
@@ -19,3 +34,11 @@ node_modules/
 
 # Dosyalar
 RELEASE.md
+
+# Örnek projelerin derleme çıktıları
+samples/
+samples/**/bin/
+samples/**/obj/
+
+# Paketleme sırasında wrapper/profiles.json dosyasından kopyalanır
+vscode-extension/profiles.json

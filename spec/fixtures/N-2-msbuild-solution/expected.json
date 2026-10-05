@@ -1,0 +1,36 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 1,
+    "successCount": 1,
+    "mergedTotal": 33,
+    "sumTotal": 33,
+    "byTech": {
+      "dotnet": 33
+    },
+    "bySource": {
+      "terminal": 33
+    },
+    "byProject": {
+      "Sample.Api": 33
+    },
+    "byHost": {
+      "Haydar-MacBook-Pro": 33
+    },
+    "sessions": [
+      {
+        "project": "Sample.Api",
+        "tech": "dotnet",
+        "source": "terminal",
+        "kind": "build",
+        "status": "success",
+        "start": 1790902800.41,
+        "end": 1790902833.41
+      }
+    ]
+  }
+}

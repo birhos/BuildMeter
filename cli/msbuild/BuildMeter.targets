@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BuildMeter MSBuild hook'u.
+
+  MSBuild bu dosyayı kullanıcı düzeyindeki ImportAfter klasöründen her projeye
+  otomatik ekler; dotnet build, Rider ve Visual Studio'nun üçü de buradan geçer.
+
+    macOS:   ~/Library/Application Support/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/  (.NET 8+)
+             ~/.local/share/Microsoft/MSBuild/Current/Microsoft.Common.targets/ImportAfter/                (.NET 7 ve öncesi)
+    Windows: %LOCALAPPDATA%\Microsoft\MSBuild\Current\Microsoft.Common.targets\ImportAfter\
+
+  Her proje build'inde ~/.buildmeter/events.jsonl dosyasına bir "start" ve bir
+  "end" satırı yazar. Build başarısız olursa "end" satırı yazılmaz; uygulama açık
+  kalan oturumu yeni build başlayınca ya da 15 dakika sonra başarısız sayar.
+
+  Kayıt yazılmayan durumlar:
+    - BUILDMETER_DISABLE ortam değişkeni tanımlı
+    - IDE'lerin arka planda çalıştırdığı design-time build'ler
+    - Multi-target projelerin dış (outer) build'i; iç build'ler ayrı ayrı yazılır
+    - Visual Studio içinde, BuildMeter VSIX'i yüklüyken (BUILDMETER_VSIX); VSIX solution
+      build'ini tek kayıt olarak yazar
+-->
+<Project>
+
+  <PropertyGroup>
+    <_BuildMeterEnabled>true</_BuildMeterEnabled>
+    <_BuildMeterEnabled Condition="'$(BUILDMETER_DISABLE)' != ''">false</_BuildMeterEnabled>
+    <_BuildMeterEnabled Condition="'$(DesignTimeBuild)' == 'true'">false</_BuildMeterEnabled>
+    <_BuildMeterEnabled Condition="'$(SkipCompilerExecution)' == 'true' and '$(ProvideCommandLineArgs)' == 'true'">false</_BuildMeterEnabled>
+    <_BuildMeterEnabled Condition="'$(IsCrossTargetingBuild)' == 'true'">false</_BuildMeterEnabled>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(_BuildMeterEnabled)' == 'true'">
+    <_BuildMeterDataDir>$(BUILDMETER_DATA_DIR)</_BuildMeterDataDir>
+    <_BuildMeterDataDir Condition="'$(_BuildMeterDataDir)' == '' and '$(OS)' == 'Windows_NT'">$(USERPROFILE)\.buildmeter</_BuildMeterDataDir>
+    <_BuildMeterDataDir Condition="'$(_BuildMeterDataDir)' == ''">$(HOME)/.buildmeter</_BuildMeterDataDir>
+    <_BuildMeterEventsFile>$([System.IO.Path]::Combine($(_BuildMeterDataDir), 'events.jsonl'))</_BuildMeterEventsFile>
+
+    <!-- Editör eklentisinin terminallere eklediği kaynak önceliklidir. -->
+    <_BuildMeterSource>$(BUILDMETER_SOURCE)</_BuildMeterSource>
+    <_BuildMeterSource Condition="'$(_BuildMeterSource)' == '' and '$(BuildingInsideVisualStudio)' == 'true'">visualstudio</_BuildMeterSource>
+    <_BuildMeterSource Condition="'$(_BuildMeterSource)' == '' and '$(BuildingByReSharper)' == 'true'">rider</_BuildMeterSource>
+    <_BuildMeterSource Condition="'$(_BuildMeterSource)' == ''">terminal</_BuildMeterSource>
+
+    <_BuildMeterSolution>$(SolutionPath)</_BuildMeterSolution>
+    <_BuildMeterSolution Condition="'$(_BuildMeterSolution)' == '*Undefined*'"></_BuildMeterSolution>
+
+    <!-- JSON metinleri: ters bölü ve çift tırnak kaçırılır. -->
+    <_BuildMeterProjectJson>$(MSBuildProjectName.Replace('\', '\\').Replace('"', '\"'))</_BuildMeterProjectJson>
+    <_BuildMeterSolutionJson>$(_BuildMeterSolution.Replace('\', '\\').Replace('"', '\"'))</_BuildMeterSolutionJson>
+    <_BuildMeterDeviceJson>$(TargetFramework)|$(Configuration)</_BuildMeterDeviceJson>
+    <_BuildMeterDeviceJson Condition="'$(TargetFramework)' == ''">$(Configuration)</_BuildMeterDeviceJson>
+    <_BuildMeterHostJson>$([System.Environment]::MachineName.Replace('\', '\\').Replace('"', '\"'))</_BuildMeterHostJson>
+    <_BuildMeterGroupJson>$(BUILDMETER_GROUP.Replace('\', '\\').Replace('"', '\"'))</_BuildMeterGroupJson>
+  </PropertyGroup>
+
+  <!--
+    Build hedefinin DependsOnTargets'ı (BeforeBuild;CoreBuild;AfterBuild) BeforeTargets="Build"
+    hedeflerinden önce çalışır; derlemenin başını yakalamak için BeforeBuild'e bağlanılır.
+  -->
+  <Target Name="_BuildMeterStart" BeforeTargets="BeforeBuild" Condition="'$(_BuildMeterEnabled)' == 'true'">
+    <!--
+      VSIX değişkeni Visual Studio açıldıktan sonra ayarlanır; Visual Studio proje değerlendirmesini
+      önbelleğe aldığı için $(BUILDMETER_VSIX) yerine hedef çalışırken süreç ortamından okunur.
+    -->
+    <PropertyGroup Condition="'$(BuildingInsideVisualStudio)' == 'true'">
+      <_BuildMeterVsix>$([System.Environment]::GetEnvironmentVariable('BUILDMETER_VSIX'))</_BuildMeterVsix>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_BuildMeterVsix)' == ''">
+      <_BuildMeterId>$([System.Guid]::NewGuid().ToString('N'))</_BuildMeterId>
+      <_BuildMeterStartTs>$([MSBuild]::Divide($([MSBuild]::Subtract($([System.DateTime]::UtcNow.Ticks), 621355968000000000)), 10000000.0))</_BuildMeterStartTs>
+      <_BuildMeterFields>"id":"$(_BuildMeterId)","source":"$(_BuildMeterSource)","tech":"dotnet","tool":"msbuild","kind":"build","project":"$(_BuildMeterProjectJson)","device":"$(_BuildMeterDeviceJson)","host":"$(_BuildMeterHostJson)"</_BuildMeterFields>
+      <_BuildMeterFields Condition="'$(_BuildMeterGroupJson)' != ''">$(_BuildMeterFields),"group":"$(_BuildMeterGroupJson)"</_BuildMeterFields>
+      <_BuildMeterFields Condition="'$(_BuildMeterSolutionJson)' != ''">$(_BuildMeterFields),"solution":"$(_BuildMeterSolutionJson)"</_BuildMeterFields>
+    </PropertyGroup>
+    <MakeDir Directories="$(_BuildMeterDataDir)" ContinueOnError="true" Condition="'$(_BuildMeterId)' != ''" />
+    <WriteLinesToFile Condition="'$(_BuildMeterId)' != ''" File="$(_BuildMeterEventsFile)"
+                      Lines="$([MSBuild]::Escape('{&quot;event&quot;:&quot;start&quot;,$(_BuildMeterFields),&quot;ts&quot;:$(_BuildMeterStartTs)}'))"
+                      Overwrite="false" ContinueOnError="true" />
+  </Target>
+
+  <Target Name="_BuildMeterEnd" AfterTargets="Build" Condition="'$(_BuildMeterEnabled)' == 'true' and '$(_BuildMeterId)' != ''">
+    <PropertyGroup>
+      <_BuildMeterEndTs>$([MSBuild]::Divide($([MSBuild]::Subtract($([System.DateTime]::UtcNow.Ticks), 621355968000000000)), 10000000.0))</_BuildMeterEndTs>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_BuildMeterEventsFile)"
+                      Lines="$([MSBuild]::Escape('{&quot;event&quot;:&quot;end&quot;,$(_BuildMeterFields),&quot;start&quot;:$(_BuildMeterStartTs),&quot;ts&quot;:$(_BuildMeterEndTs),&quot;status&quot;:&quot;success&quot;}'))"
+                      Overwrite="false" ContinueOnError="true" />
+  </Target>
+
+</Project>

@@ -1,0 +1,62 @@
+{
+  "now": 1790949200,
+  "window": {
+    "start": 1790899200,
+    "end": 1790985600
+  },
+  "summary": {
+    "count": 2,
+    "successCount": 1,
+    "mergedTotal": 90,
+    "sumTotal": 90,
+    "byTech": {
+      "dotnet": 90
+    },
+    "bySource": {
+      "rider": 30,
+      "terminal": 60
+    },
+    "byProject": {
+      "Api": 90
+    },
+    "byHost": {},
+    "sessions": [
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "rider",
+        "kind": "build",
+        "status": "failed",
+        "start": 1790902800,
+        "end": 1790902800
+      },
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "rider",
+        "kind": "build",
+        "status": "success",
+        "start": 1790903100,
+        "end": 1790903130
+      },
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "visualstudio",
+        "kind": "build",
+        "status": "failed",
+        "start": 1790948000,
+        "end": 1790948000
+      },
+      {
+        "project": "Api",
+        "tech": "dotnet",
+        "source": "terminal",
+        "kind": "build",
+        "status": "running",
+        "start": 1790949140,
+        "end": null
+      }
+    ]
+  }
+}

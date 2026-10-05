@@ -1,8 +1,10 @@
 import Foundation
 import WidgetKit
 
-/// Terminal wrapper'ı ve VS Code/Cursor eklentisinin yazdığı olay dosyasını izler,
-/// oturumları üretir ve widget için özet yazar.
+/// Toplayıcıların (terminal wrapper'ı, editör eklentisi, MSBuild hook'u) yazdığı olay
+/// dosyalarını izler, oturumları üretir ve widget için özet yazar.
+///
+/// Okunan dosyalar: `events.jsonl` ve makine başına yazılan `events-<host>.jsonl`.
 @MainActor
 final class EventStore: ObservableObject {
     static let dataDirectory: URL = {
@@ -14,15 +16,23 @@ final class EventStore: ObservableObject {
     }()
     static let eventsURL = dataDirectory.appendingPathComponent("events.jsonl")
 
+    static func isEventsFile(_ name: String) -> Bool {
+        name.hasPrefix("events") && name.hasSuffix(".jsonl")
+    }
+
     /// Bitişi gelmeyen ve süreci de bilinmeyen oturumlar bu süreden sonra yok sayılır.
     private static let staleAfter: TimeInterval = 3 * 3600
 
     @Published private(set) var sessions: [BuildSession] = []
     @Published private(set) var now = Date()
 
-    private var byID: [String: BuildSession] = [:]
-    private var readOffset: UInt64 = 0
-    private var pendingTail = Data()
+    private struct FileCursor {
+        var offset: UInt64 = 0
+        var pendingTail = Data()
+    }
+
+    private var log = EventLog()
+    private var cursors: [String: FileCursor] = [:]
     private var timer: Timer?
     private var lastSnapshotKey = ""
     private var tickCount = 0
@@ -47,11 +57,14 @@ final class EventStore: ObservableObject {
     }
 
     func reloadAll() {
-        byID = [:]
-        readOffset = 0
-        pendingTail = Data()
+        resetLog()
         readNewEvents()
         publish()
+    }
+
+    private func resetLog() {
+        log = EventLog()
+        cursors = [:]
     }
 
     private func tick() {
@@ -68,82 +81,65 @@ final class EventStore: ObservableObject {
 
     @discardableResult
     private func readNewEvents() -> Bool {
-        let url = Self.eventsURL
-        guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
-              let size = (attrs[.size] as? NSNumber)?.uint64Value
-        else { return false }
-
-        if size < readOffset { // dosya kesilmiş/yeniden yazılmış
-            byID = [:]
-            readOffset = 0
-            pendingTail = Data()
+        let names = ((try? FileManager.default.contentsOfDirectory(atPath: Self.dataDirectory.path)) ?? [])
+            .filter(Self.isEventsFile)
+            .sorted()
+        var sizes: [String: UInt64] = [:]
+        for name in names {
+            let path = Self.dataDirectory.appendingPathComponent(name).path
+            if let size = (try? FileManager.default.attributesOfItem(atPath: path))?[.size] as? NSNumber {
+                sizes[name] = size.uint64Value
+            }
         }
-        guard size > readOffset, let handle = try? FileHandle(forReadingFrom: url) else { return false }
+
+        // Bir dosya kesildi, yeniden yazıldı ya da silindiyse her şeyi baştan oku.
+        let shrunk = cursors.contains { name, cursor in (sizes[name] ?? 0) < cursor.offset }
+        if shrunk { resetLog() }
+
+        var changed = shrunk
+        for name in names {
+            if let size = sizes[name], readFile(name, size: size) { changed = true }
+        }
+        return changed
+    }
+
+    private func readFile(_ name: String, size: UInt64) -> Bool {
+        var cursor = cursors[name] ?? FileCursor()
+        guard size > cursor.offset,
+              let handle = try? FileHandle(forReadingFrom: Self.dataDirectory.appendingPathComponent(name))
+        else { return false }
         defer { try? handle.close() }
 
         do {
-            try handle.seek(toOffset: readOffset)
+            try handle.seek(toOffset: cursor.offset)
             let chunk = try handle.readToEnd() ?? Data()
-            readOffset += UInt64(chunk.count)
-            var data = pendingTail + chunk
+            cursor.offset += UInt64(chunk.count)
+            var data = cursor.pendingTail + chunk
             // Yarım yazılmış son satırı bir sonraki okumaya bırak.
-            if let lastNewline = data.lastIndex(of: UInt8(ascii: "\n")) {
-                pendingTail = data[(lastNewline + 1)...]
-                data = data[..<lastNewline]
-            } else {
-                pendingTail = data
+            guard let lastNewline = data.lastIndex(of: UInt8(ascii: "\n")) else {
+                cursor.pendingTail = data
+                cursors[name] = cursor
                 return false
             }
-            let decoder = JSONDecoder()
-            for line in data.split(separator: UInt8(ascii: "\n")) where !line.isEmpty {
-                if let event = try? decoder.decode(RawEvent.self, from: Data(line)) {
-                    apply(event)
-                }
-            }
+            cursor.pendingTail = data[(lastNewline + 1)...]
+            data = data[..<lastNewline]
+            cursors[name] = cursor
+            log.ingest(data)
             return true
         } catch {
             return false
         }
     }
 
-    private func apply(_ e: RawEvent) {
-        let ts = Date(timeIntervalSince1970: e.ts)
-        switch e.event {
-        case "start":
-            byID[e.id] = BuildSession(
-                id: e.id, source: BuildSource(raw: e.source), kind: e.kind ?? "run",
-                project: e.project ?? "?", device: e.device,
-                start: ts, end: nil, status: .running, pid: e.pid
-            )
-        case "end":
-            var session = byID[e.id] ?? BuildSession(
-                id: e.id, source: BuildSource(raw: e.source), kind: e.kind ?? "run",
-                project: e.project ?? "?", device: e.device,
-                start: e.start.map(Date.init(timeIntervalSince1970:)) ?? ts,
-                end: nil, status: .running, pid: nil
-            )
-            if let start = e.start { session.start = Date(timeIntervalSince1970: start) }
-            if let device = e.device, !device.isEmpty { session.device = device }
-            if let project = e.project, !project.isEmpty { session.project = project }
-            session.end = max(ts, session.start)
-            session.status = BuildStatus(rawValue: e.status ?? "") ?? .failed
-            if session.status == .running { session.status = .failed }
-            byID[e.id] = session
-        case "discard":
-            byID[e.id] = nil
-        default:
-            break
-        }
-    }
-
     /// Terminal kapatıldığında ya da editör çöktüğünde "end" gelmez.
-    /// Süreci ölmüş veya çok eski aktif oturumları listeden çıkar.
+    /// Süreci ölmüş veya çok eski aktif oturumları listeden çıkar. MSBuild kayıtlarını
+    /// `SessionMerger` başarısız olarak kapatır, bu yüzden onlar burada silinmez.
     private func expireDeadSessions() {
         let now = Date()
-        for (id, s) in byID where s.isActive {
+        for (id, s) in log.byID where s.isActive && !s.isMSBuild {
             let tooOld = now.timeIntervalSince(s.start) > Self.staleAfter
             let dead = s.pid.map { kill($0, 0) != 0 && errno == ESRCH } ?? false
-            if tooOld || dead { byID[id] = nil }
+            if tooOld || dead { log.remove(id: id) }
         }
     }
 
@@ -151,7 +147,8 @@ final class EventStore: ObservableObject {
 
     private func publish() {
         now = Date()
-        sessions = byID.values.sorted { $0.start > $1.start }
+        sessions = SessionMerger.sessions(from: Array(log.byID.values), now: now)
+            .sorted { $0.start > $1.start }
         writeSnapshotIfNeeded()
     }
 
@@ -171,7 +168,7 @@ final class EventStore: ObservableObject {
             todayCount: todaySummary.count,
             todaySuccess: todaySummary.successCount,
             todayLongest: todaySummary.longest,
-            active: active.map { .init(project: $0.project, source: $0.source, start: $0.start) },
+            active: active.map { .init(project: $0.project, source: $0.source, tech: $0.tech, start: $0.start) },
             week: stats.dailyTotals(days: 7, includeActive: false).map { .init(day: $0.day, total: $0.total) },
             topProjects: todaySummary.byProject.prefix(4).map { .init(project: $0.key, total: $0.value) }
         )

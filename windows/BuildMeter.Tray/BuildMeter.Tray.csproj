@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- Tepsi simgesi (NotifyIcon) Windows Forms'tan gelir. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- macOS ve Linux'ta da derlenebilsin (çalıştırma yalnızca Windows'ta). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>BuildMeter</AssemblyName>
+    <RootNamespace>BuildMeter.Tray</RootNamespace>
+    <ApplicationIcon>Assets\BuildMeter.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- DPI ayarı WPF için manifest'te yapılır; WinForms'un ApplicationHighDpiMode önerisi geçerli değil. -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+    <Version>1.0.0</Version>
+    <Product>BuildMeter</Product>
+    <Description>Build bekleme sürelerini gösteren tepsi uygulaması</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Windows Forms ve WPF'te aynı adlı tipler var; WPF'inkiler kullanılır. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\BuildMeter.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BuildMeter.Core\BuildMeter.Core.csproj" />
+  </ItemGroup>
+
+</Project>
