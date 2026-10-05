@@ -86,7 +86,7 @@ The DMG contains only the app and widget. To install the prebuilt terminal wrapp
 curl -fsSL https://raw.githubusercontent.com/birhos/BuildMeter/main/scripts/install-cli.sh | bash
 ```
 
-Install the editor extension from source as described below (`scripts/install.sh --ext-only`).
+Install the editor extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=HaydarDemir.buildmeter) or [Open VSX](https://open-vsx.org/extension/HaydarDemir/buildmeter) (for Cursor, VSCodium and other Open VSX editors).
 
 ### Windows (Scoop)
 
