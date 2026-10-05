@@ -8,6 +8,15 @@
 
 </div>
 
+[![Release](https://img.shields.io/github/v/release/birhos/BuildMeter)](https://github.com/birhos/BuildMeter/releases/latest)
+[![Tests](https://img.shields.io/github/actions/workflow/status/birhos/BuildMeter/tests.yml?branch=main&label=tests)](https://github.com/birhos/BuildMeter/actions/workflows/tests.yml)
+[![VS Marketplace](https://vsmarketplacebadges.dev/version-short/HaydarDemir.buildmeter.svg)](https://marketplace.visualstudio.com/items?itemName=HaydarDemir.buildmeter)
+[![Installs](https://vsmarketplacebadges.dev/installs-short/HaydarDemir.buildmeter.svg)](https://marketplace.visualstudio.com/items?itemName=HaydarDemir.buildmeter)
+[![Open VSX](https://img.shields.io/open-vsx/v/HaydarDemir/buildmeter?label=open%20vsx)](https://open-vsx.org/extension/HaydarDemir/buildmeter)
+[![Open VSX downloads](https://img.shields.io/open-vsx/dt/HaydarDemir/buildmeter?label=open%20vsx%20downloads)](https://open-vsx.org/extension/HaydarDemir/buildmeter)
+[![Homebrew](https://img.shields.io/badge/homebrew-birhos%2Ftap%2Fbuildmeter-FBB040?logo=homebrew&logoColor=white)](https://github.com/birhos/homebrew-tap)
+[![License: MIT](https://img.shields.io/github/license/birhos/BuildMeter)](LICENSE)
+
 BuildMeter records how long you wait for Flutter, .NET, React (Vite, Create React App) and Next.js builds and dev servers, from the terminal, Rider, Visual Studio and your editor, until the app is up. Records are collected in `~/.buildmeter/events.jsonl`; a macOS menu bar app and widget, and a Windows tray app, turn them into daily, weekly and monthly summaries.
 
 ## Screenshots
